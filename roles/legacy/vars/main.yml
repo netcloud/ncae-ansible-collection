@@ -1,0 +1,10 @@
+---
+VALID_STATUS:
+  - DE
+  - ER
+  - OR
+  - RA
+  - RE
+CURRENT_EXT_SERVICE: {}
+CURRENT_SERVICE: {}
+CURRENT_PHASE: {}

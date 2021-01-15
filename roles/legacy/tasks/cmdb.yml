@@ -1,0 +1,13 @@
+---
+- name: 'Update the NCAE CMDB'
+  uri:
+    url: '{{ cmdb_url }}'
+    method: PATCH
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body:
+      data: '{{ CMDB_DATA }}'
+  delegate_to: localhost
+...

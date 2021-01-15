@@ -1,0 +1,18 @@
+---
+- name: Raise a error when the PHASE_STATUS is not valid
+  fail:
+    msg: '{{ PHASE_STATUS }} is not a valid status!'
+  when: PHASE_STATUS not in VALID_STATUS
+
+- name: Update the status of a phase on the NCAE appliance
+  uri:
+    url: '{{ callback_url }}'
+    method: PATCH
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body:
+      status: '{{ PHASE_STATUS }}'
+  delegate_to: localhost
+...

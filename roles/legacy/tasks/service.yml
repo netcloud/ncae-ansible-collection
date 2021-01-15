@@ -1,0 +1,58 @@
+---
+- name: 'Try to fetch the service object for idempotency'
+  uri:
+    url: "{{ NCAE_URL + '/api/automation/v1/service?name=' + SERVICE.name | urlencode }}"
+    method: GET
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: service
+
+- name: 'Set the service id for future useage'
+  set_fact:
+    SERVICE_ID: "{{ service.json.results[0].id }}"
+  when: service.json.results
+
+- name: 'If the object exists we remove the ID from the dict'
+  set_fact:
+    CURRENT_SERVICE: '{{ CURRENT_SERVICE | combine({item.key: item.value}) }}'
+  when: service.json.results and item.key not in ['id']
+  loop: '{{ service.json.results[0] | dict2items }}'
+  loop_control:
+    label: '{{ item.key }}'
+
+- name: 'Update the service'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/service/{{ SERVICE_ID }}'
+    method: PATCH
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ SERVICE }}'
+  delegate_to: localhost
+  when: CURRENT_SERVICE != SERVICE and service.json.results
+  changed_when: true
+
+- name: 'Create the service'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/service'
+    method: POST
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ SERVICE }}'
+    status_code: 201
+  delegate_to: localhost
+  when: not service.json.results
+  changed_when: true
+  register: service_create_output
+
+- name: 'Set the service id for future useage'
+  set_fact:
+    SERVICE_ID: "{{ service_create_output.json.id }}"
+  when: service_create_output.json is defined
+...
