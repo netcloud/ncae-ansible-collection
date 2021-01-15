@@ -7,8 +7,8 @@ This is a support role for the Netcloud Automation Engine (NCAE).
 Role Variables
 --------------
 
-The following NCAE variables are required for this role.
-NCAE_TOKEN: YOUR TOKEN
+The following NCAE variables are required for this role.  
+NCAE_TOKEN: YOUR TOKEN  
 NCAE_URL: FQDN of the NCAE
 
 Example: Service deployment
