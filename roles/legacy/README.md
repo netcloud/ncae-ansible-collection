@@ -2,6 +2,7 @@ NCAE
 ====
 
 This is a support role for the Netcloud Automation Engine (NCAE).
+The role is also available on [Ansible Galaxy](https://galaxy.ansible.com/netcloud/ncae)
 
 
 Role Variables
