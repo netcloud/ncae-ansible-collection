@@ -15,13 +15,21 @@
     SERVICE_ID: "{{ service.json.results[0].id }}"
   when: service.json.results
 
-- name: 'If the object exists we remove the ID from the dict'
-  set_fact:
-    CURRENT_SERVICE: '{{ CURRENT_SERVICE | combine({item.key: item.value}) }}'
-  when: service.json.results and item.key not in ['id']
-  loop: '{{ service.json.results[0] | dict2items }}'
-  loop_control:
-    label: '{{ item.key }}'
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_SERVICE: '{{ CURRENT_SERVICE | combine({item.key: item.value}) }}'
+      when: service.json.results and item.key not in ['id']
+      loop: '{{ service.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if service.json.results length equals 0. Compare: {{ service.json.results | length }}'
+        verbosity: 2
+
 
 - name: 'Update the service'
   uri:
