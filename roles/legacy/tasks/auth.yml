@@ -1,0 +1,82 @@
+---
+- name: 'Try to fetch the auth object for idempotency'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/auth?name={{ AUTH.name }}'
+    method: GET
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: auth
+
+- name: 'Set the auth id for future useage'
+  set_fact:
+    AUTH_ID: "{{ auth.json.results[0].id }}"
+  when: auth.json.results | length > 0
+
+- name: Print return information from the previous task
+  ansible.builtin.debug:
+    var: auth.json.results
+    verbosity: 2
+  changed_when: True
+
+- name: 'initialize an empty dict'
+  set_fact:
+    CURRENT_AUTH: {}
+  when: auth.json.results[0] is defined
+
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_AUTH: "{{ CURRENT_AUTH | combine( { item.key: item.value } ) }}"
+      when: item.key not in ['id']
+      loop: "{{ auth.json.results[0] | dict2items }}"
+      loop_control:
+        label: "{{ item.key }}"
+  #when: auth.json.results[0] is defined
+  #when: auth.json.results | lenght > 0
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if auth.json.results length equals 0. Compare: {{ auth.json.results | length }}'
+        verbosity: 2
+
+- name: 'Update the auth'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/auth/{{ AUTH_ID }}'
+    method: PATCH
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ AUTH }}'
+  delegate_to: localhost
+  when: 
+    - auth.json.results[0] is defined
+    - CURRENT_AUTH is defined
+    - CURRENT_AUTH != AUTH
+  changed_when: true
+  
+- name: 'Create the auth'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/auth'
+    method: POST
+    headers:
+      Authorization: 'Token {{ NCAE_TOKEN }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ AUTH }}'
+    status_code: 201
+  delegate_to: localhost
+  when: not auth.json.results
+  changed_when: true
+  register: auth_create_output
+
+- name: 'Set the auth id for future useage'
+  set_fact:
+    AUTH_ID: "{{ auth_create_output.json.id }}"
+  when: auth_create_output.json is defined
+...
+

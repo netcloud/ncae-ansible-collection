@@ -10,13 +10,20 @@
   delegate_to: localhost
   register: phase
 
-- name: 'If the object exists we remove the ID from the dict'
-  set_fact:
-    CURRENT_PHASE: '{{ CURRENT_PHASE | combine({item.key: item.value}) }}'
-  when: phase.json.results and item.key not in ['id']
-  loop: '{{ phase.json.results[0] | dict2items }}'
-  loop_control:
-    label: '{{ item.key }}'
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_PHASE: '{{ CURRENT_PHASE | combine({item.key: item.value}) }}'
+      when: phase.json.results and item.key not in ['id']
+      loop: '{{ phase.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if phase.json.results length equals 0. Compare: {{ phase.json.results | length }}'
+        verbosity: 2
 
 - name: 'Update the phase'
   uri:
