@@ -1,8 +1,8 @@
 ---
 - name: Raise a error when the STATUS is not valid
   fail:
-    msg: '{{ STATUS }} is not a valid status!'
-  when: STATUS not in VALID_STATUS
+    msg: '{{ LOG_STATUS }} is not a valid status!'
+  when: LOG_STATUS not in VALID_LOG_STATUS
 
 - name: 'Creating a log entry on the NCAE appliance'
   uri:

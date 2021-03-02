@@ -39,6 +39,9 @@ are idempotent based on the `name`.
             type: text
             label: VLAN ID
             required: true
+      devices: # Optional
+        - name: device_name
+      fire_and_forget: false # Optional
     PHASES:
       - name: Stage 1
         order: 1
@@ -46,6 +49,7 @@ are idempotent based on the `name`.
         auto_deploy: true
         idempotency: false
         uri: 10/launch/
+        send_credentials: false # Optional
       - name: Stage 2
         order: 2
         text: Second stage of the deployment
@@ -71,6 +75,27 @@ are idempotent based on the `name`.
       loop: '{{ PHASES }}'
       loop_control:
         loop_var: PHASE
+```
+
+Logging Example:
+
+```yml
+- hosts: localhost
+  vars:
+    NCAE_TOKEN: YOUR NCAE BACKEND TOKEN
+    NCAE_URL: FQDN of the NCAE
+  tasks:
+    - name: 'Log to NCAE'
+      vars:
+        LOG_TITLE: 'Example Title'
+        LOG_HOSTNAME: '{{ hostname }}'
+        LOG_TEXT: 'Successfully deployed. Changes to the XYZ done: {{ output.XYZ }}'
+        LOG_STATUS: 'IN'
+        service_id: '{{ service_id }}'
+        service_instance_id: '{{ service_instance_id }}'
+      include_role:
+        name: netcloud.ncae
+        tasks_from: log
 ```
 
 License
