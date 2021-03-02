@@ -73,6 +73,27 @@ are idempotent based on the `name`.
         loop_var: PHASE
 ```
 
+Logging Example:
+
+```yml
+- hosts: localhost
+  vars:
+    NCAE_TOKEN: YOUR NCAE BACKEND TOKEN
+    NCAE_URL: FQDN of the NCAE
+  tasks:
+    - name: 'Log to NCAE'
+      vars:
+        LOG_TITLE: 'Example Title'
+        LOG_HOSTNAME: '{{ hostname }}'
+        LOG_TEXT: 'Successfully deployed. Changes to the XYZ done: {{ output.XYZ }}'
+        LOG_STATUS: 'IN'
+        service_id: '{{ service_id }}'
+        service_instance_id: '{{ service_instance_id }}'
+      include_role:
+        name: netcloud.ncae
+        tasks_from: log
+```
+
 License
 -------
 
