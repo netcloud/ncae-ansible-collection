@@ -4,7 +4,7 @@
     url: "{{ NCAE_URL + '/api/automation/v1/phase?service=' + SERVICE_ID + '&name=' + PHASE.name | urlencode }}"
     method: GET
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
   delegate_to: localhost
@@ -30,7 +30,7 @@
     url: '{{ NCAE_URL }}/api/automation/v1/phase/{{ phase.json.results[0].id }}'
     method: PATCH
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
     body: '{{ PHASE }}'
@@ -43,7 +43,7 @@
     url: '{{ NCAE_URL }}/api/automation/v1/phase'
     method: POST
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
     body: '{{ PHASE | combine({"service_id": SERVICE_ID, "ext_api_service_id": EXT_API_SERVICE_ID}) }}'

@@ -4,7 +4,7 @@
     url: "{{ NCAE_URL + '/api/automation/v1/service?name=' + SERVICE.name | urlencode }}"
     method: GET
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
   delegate_to: localhost
@@ -36,7 +36,7 @@
     url: '{{ NCAE_URL }}/api/automation/v1/service/{{ SERVICE_ID }}'
     method: PATCH
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
     body: '{{ SERVICE }}'
@@ -49,7 +49,7 @@
     url: '{{ NCAE_URL }}/api/automation/v1/service'
     method: POST
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
     body: '{{ SERVICE }}'
