@@ -9,9 +9,10 @@ Role Variables
 --------------
 
 The following NCAE variables are required for this role.  
-NCAE_USERNAME: NCAE USERNAME 
-NCAE_PASSWORD: NCAE PASSWORD
-NCAE_URL: FQDN of the NCAE
+
+- NCAE_USERNAME: YOUR NCAE BACKEND USERNAME
+- NCAE_PASSWORD: YOUR NCAE BACKEND PASSWORD
+- NCAE_URL: FQDN of the NCAE
 
 Example: Service deployment
 ----------------
