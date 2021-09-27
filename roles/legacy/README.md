@@ -62,7 +62,7 @@ are idempotent based on the `name`.
   tasks:
     - include_role:
         name: netcloud.ncae
-        task_from: login # Needs to be called first inorder to get AUTH Cookie
+        tasks_from: login # Needs to be called first inorder to get AUTH Cookie
         
     - include_role:
         name: netcloud.ncae
@@ -94,7 +94,7 @@ Logging Example:
   tasks:
     - include_role:
         name: netcloud.ncae
-        task_from: login # Needs to be called first inorder to get AUTH Cookie
+        tasks_from: login # Needs to be called first inorder to get AUTH Cookie
         
     - name: 'Log to NCAE'
       vars:
