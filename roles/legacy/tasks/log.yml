@@ -9,7 +9,7 @@
     url: '{{ logger_url }}'
     method: POST
     headers:
-      Authorization: 'Token {{ NCAE_TOKEN }}'
+      Cookie: '{{ AUTH_COOKIE }}'
     validate_certs: no
     body_format: json
     status_code: 201

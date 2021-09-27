@@ -9,8 +9,10 @@ Role Variables
 --------------
 
 The following NCAE variables are required for this role.  
-NCAE_TOKEN: YOUR TOKEN  
-NCAE_URL: FQDN of the NCAE
+
+- NCAE_USERNAME: YOUR NCAE BACKEND USERNAME
+- NCAE_PASSWORD: YOUR NCAE BACKEND PASSWORD
+- NCAE_URL: FQDN of the NCAE
 
 Example: Service deployment
 ----------------
@@ -20,7 +22,8 @@ are idempotent based on the `name`.
 ```yml
 - hosts: localhost
   vars:
-    NCAE_TOKEN: YOUR NCAE BACKEND TOKEN
+    NCAE_USERNAME: YOUR NCAE BACKEND USERNAME
+    NCAE_PASSWORD: YOUR NCAE BACKEND PASSWORD
     NCAE_URL: FQDN of the NCAE
     AUTH:
       name: tower01 token
@@ -59,6 +62,10 @@ are idempotent based on the `name`.
   tasks:
     - include_role:
         name: netcloud.ncae
+        tasks_from: login # Needs to be called first inorder to get AUTH Cookie
+        
+    - include_role:
+        name: netcloud.ncae
         tasks_from: auth
 
     - include_role:
@@ -85,6 +92,10 @@ Logging Example:
     NCAE_TOKEN: YOUR NCAE BACKEND TOKEN
     NCAE_URL: FQDN of the NCAE
   tasks:
+    - include_role:
+        name: netcloud.ncae
+        tasks_from: login # Needs to be called first inorder to get AUTH Cookie
+        
     - name: 'Log to NCAE'
       vars:
         LOG_TITLE: 'Example Title'
