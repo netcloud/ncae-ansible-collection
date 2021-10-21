@@ -8,6 +8,6 @@
     validate_certs: no
     body_format: json
     body:
-      data: '{{ CMDB_DATA }}'
+      callback_data: '{{ CMDB_DATA }}'
   delegate_to: localhost
 ...
