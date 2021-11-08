@@ -1,7 +1,8 @@
 ---
 - name: 'Try to fetch the One Time Report object for idempotency'
   uri:
-    url: "{{ NCAE_URL + '/api/dashboard/v1/onetimereport?name=' + ONETIMEREPORT.name | urlencode }}"
+    url: "{{ NCAE_URL + '/api/dashboard/v1/onetimereport?name=' + ONETIMEREPORT.name + '&device=' + DEVICE_ID
+    | urlencode }}"
     method: GET
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
