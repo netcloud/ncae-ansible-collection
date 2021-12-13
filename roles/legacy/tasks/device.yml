@@ -1,0 +1,68 @@
+---
+- name: 'Try to fetch the Device object for idempotency'
+  uri:
+    url: "{{ NCAE_URL + '/api/dashboard/v1/device?name=' + DEVICE.name | urlencode }}"
+    method: GET
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: device
+
+- name: 'Set the DEVICE id for future useage'
+  set_fact:
+    DEVICE_ID: "{{ device.json.results[0].id }}"
+  when: device.json.results
+
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_DEVICE: '{{ CURRENT_DEVICE | combine({item.key: item.value}) }}'
+      when: device.json.results and item.key not in ['id']
+      loop: '{{ device.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if device.json.results length equals 0. Compare: {{ device.json.results | length }}'
+        verbosity: 2
+
+- name: 'Update the device'
+  uri:
+    url: '{{ NCAE_URL }}/api/dashboard/v1/device/{{ DEVICE_ID }}'
+    method: PATCH
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body:
+      id: '{{ DEVICE_ID }}'
+      ip: '{{ DEVICE["ip"] }}'
+      name: '{{ DEVICE["name"] }}'
+  delegate_to: localhost
+  when: CURRENT_DEVICE != DEVICE and device.json.results
+  changed_when: true
+
+- name: 'Create the DEVICE'
+  uri:
+    url: '{{ NCAE_URL }}/api/dashboard/v1/device'
+    method: POST
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ DEVICE }}'
+    status_code: 200
+  delegate_to: localhost
+  when: not device.json.results
+  changed_when: true
+  register: device_create_output
+
+- name: 'Set the device id for future useage'
+  set_fact:
+    DEVICE_ID: "{{ device_create_output.json.id }}"
+  when: device_create_output.json is defined
+...

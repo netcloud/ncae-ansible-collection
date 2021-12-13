@@ -15,4 +15,3 @@
   set_fact:
     AUTH_COOKIE: 'sessionid={{ login["cookies"]["sessionid"] }}'
 ...
-

@@ -53,12 +53,12 @@
     body_format: json
     body: '{{ AUTH }}'
   delegate_to: localhost
-  when: 
+  when:
     - auth.json.results[0] is defined
     - CURRENT_AUTH is defined
     - CURRENT_AUTH != AUTH
   changed_when: true
-  
+
 - name: 'Create the auth'
   uri:
     url: '{{ NCAE_URL }}/api/automation/v1/auth'
@@ -79,4 +79,3 @@
     AUTH_ID: "{{ auth_create_output.json.id }}"
   when: auth_create_output.json is defined
 ...
-

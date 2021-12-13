@@ -1,0 +1,67 @@
+---
+- name: 'Try to fetch the One Time Report object for idempotency'
+  uri:
+    url: "{{ NCAE_URL + '/api/dashboard/v1/onetimereport?name=' + ONETIMEREPORT.name + '&device_id=' + DEVICE_ID
+    | urlencode }}"
+    method: GET
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: onetimereport
+
+- name: 'Set the ONETIMEREPORT id for future useage'
+  set_fact:
+    ONETIMEREPORT_ID: "{{ onetimereport.json.results[0].id }}"
+  when: onetimereport.json.results
+
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_ONETIMEREPORT: '{{ CURRENT_ONETIMEREPORT | combine({item.key: item.value}) }}'
+      when: onetimereport.json.results and item.key not in ['id']
+      loop: '{{ onetimereport.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if onetimereport.json.results length equals 0. Compare: {{ onetimereport.json.results | length }}'
+        verbosity: 2
+
+
+- name: 'Update the onetimereport'
+  uri:
+    url: '{{ NCAE_URL }}/api/dashboard/v1/onetimereport/{{ ONETIMEREPORT_ID }}'
+    method: PATCH
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ ONETIMEREPORT }}'
+  delegate_to: localhost
+  when: CURRENT_ONETIMEREPORT != ONETIMEREPORT and onetimereport.json.results
+  changed_when: true
+
+- name: 'Create the ONETIMEREPORT'
+  uri:
+    url: '{{ NCAE_URL }}/api/dashboard/v1/onetimereport'
+    method: POST
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ ONETIMEREPORT }}'
+    status_code: 201
+  delegate_to: localhost
+  when: not onetimereport.json.results
+  changed_when: true
+  register: onetimereport_create_output
+
+- name: 'Set the onettimereport id for future useage'
+  set_fact:
+    ONETIMEREPORT_ID: "{{ onetimereport_create_output.json.id }}"
+  when: onetimereport_create_output.json is defined
+...
