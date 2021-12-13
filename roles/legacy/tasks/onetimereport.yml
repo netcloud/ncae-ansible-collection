@@ -1,7 +1,7 @@
 ---
 - name: 'Try to fetch the One Time Report object for idempotency'
   uri:
-    url: "{{ NCAE_URL + '/api/dashboard/v1/onetimereport?name=' + ONETIMEREPORT.name + '&device=' + DEVICE_ID
+    url: "{{ NCAE_URL + '/api/dashboard/v1/onetimereport?name=' + ONETIMEREPORT.name + '&device_id=' + DEVICE_ID
     | urlencode }}"
     method: GET
     headers:
