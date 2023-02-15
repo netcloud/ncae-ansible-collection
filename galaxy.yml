@@ -1,0 +1,21 @@
+---
+namespace: netcloud
+name: ncae
+version: 1.0.0
+readme: README.md
+authors:
+  - Pascal Mathis <mathis@netcloud.ch>
+  - Richard Strnad <strnad@netcloud.ch>
+description: Ansible collection for interacting with Netcloud Automation Engine (NCAE)
+license:
+  - MIT
+tags:
+  - netcloud
+  - automation
+  - engine
+  - ncae
+dependencies: {}
+repository: https://github.com/netcloud/ncae-ansible-collection
+homepage: https://www.netcloud.ch
+issues: https://github.com/netcloud/ncae-ansible-collection/issues
+build_ignore: []
