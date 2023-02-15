@@ -7,13 +7,13 @@ authors:
   - Pascal Mathis <mathis@netcloud.ch>
   - Richard Strnad <strnad@netcloud.ch>
 description: Ansible collection for interacting with Netcloud Automation Engine (NCAE)
-license:
-  - MIT
+license_file: LICENSE.txt
 tags:
+  - infrastructure
+  - ncae
   - netcloud
   - automation
   - engine
-  - ncae
 dependencies: {}
 repository: https://github.com/netcloud/ncae-ansible-collection
 homepage: https://www.netcloud.ch
