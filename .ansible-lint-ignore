@@ -1,0 +1,15 @@
+# This file contains ignores rule violations for ansible-lint
+roles/legacy/defaults/main.yml var-naming
+roles/legacy/tasks/auth.yml var-naming[AUTH_ID]
+roles/legacy/tasks/auth.yml var-naming[CURRENT_AUTH]
+roles/legacy/tasks/device.yml var-naming[CURRENT_DEVICE]
+roles/legacy/tasks/device.yml var-naming[DEVICE_ID]
+roles/legacy/tasks/ext_api_service.yml var-naming[BODY_VAL]
+roles/legacy/tasks/ext_api_service.yml var-naming[EXT_API_SERVICE_ID]
+roles/legacy/tasks/login.yml var-naming[AUTH_COOKIE]
+roles/legacy/tasks/onetimereport.yml var-naming[CURRENT_ONETIMEREPORT]
+roles/legacy/tasks/onetimereport.yml var-naming[ONETIMEREPORT_ID]
+roles/legacy/tasks/phase.yml var-naming[CURRENT_PHASE]
+roles/legacy/tasks/service.yml var-naming[CURRENT_SERVICE]
+roles/legacy/tasks/service.yml var-naming[SERVICE_ID]
+roles/legacy/vars/main.yml var-naming

@@ -1,17 +1,17 @@
 ---
 - name: 'Try to fetch the auth object for idempotency'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/automation/v1/auth?name={{ AUTH.name }}'
     method: GET
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
   delegate_to: localhost
   register: auth
 
 - name: 'Set the auth id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     AUTH_ID: "{{ auth.json.results[0].id }}"
   when: auth.json.results | length > 0
 
@@ -19,24 +19,24 @@
   ansible.builtin.debug:
     var: auth.json.results
     verbosity: 2
-  changed_when: True
+  changed_when: true
 
-- name: 'initialize an empty dict'
-  set_fact:
+- name: 'Initialize an empty dict'
+  ansible.builtin.set_fact:
     CURRENT_AUTH: {}
   when: auth.json.results[0] is defined
 
 - name: 'Outer block'
   block:
     - name: 'If the object exists we remove the ID from the dict'
-      set_fact:
-        CURRENT_AUTH: "{{ CURRENT_AUTH | combine( { item.key: item.value } ) }}"
+      ansible.builtin.set_fact:
+        CURRENT_AUTH: "{{ CURRENT_AUTH | combine({item.key: item.value}) }}"
       when: item.key not in ['id']
       loop: "{{ auth.json.results[0] | dict2items }}"
       loop_control:
         label: "{{ item.key }}"
-  #when: auth.json.results[0] is defined
-  #when: auth.json.results | lenght > 0
+  # when: auth.json.results[0] is defined
+  # when: auth.json.results | lenght > 0
   rescue:
     - name: Handling problem that multiple when does not work properly
       ansible.builtin.debug:
@@ -44,12 +44,12 @@
         verbosity: 2
 
 - name: 'Update the auth'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/automation/v1/auth/{{ AUTH_ID }}'
     method: PATCH
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body: '{{ AUTH }}'
   delegate_to: localhost
@@ -60,12 +60,12 @@
   changed_when: true
 
 - name: 'Create the auth'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/automation/v1/auth'
     method: POST
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body: '{{ AUTH }}'
     status_code: 201
@@ -75,7 +75,7 @@
   register: auth_create_output
 
 - name: 'Set the auth id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     AUTH_ID: "{{ auth_create_output.json.id }}"
   when: auth_create_output.json is defined
 ...

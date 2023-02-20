@@ -1,16 +1,16 @@
 ---
 - name: Raise a error when the PHASE_STATUS is not valid
-  fail:
+  ansible.builtin.fail:
     msg: '{{ PHASE_STATUS }} is not a valid status!'
   when: PHASE_STATUS not in VALID_STATUS
 
 - name: Update the status of a phase on the NCAE appliance
-  uri:
+  ansible.builtin.uri:
     url: '{{ callback_url }}'
     method: PATCH
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body:
       status: '{{ PHASE_STATUS }}'

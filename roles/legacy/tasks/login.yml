@@ -1,9 +1,9 @@
 ---
 - name: 'Try to login to NCAE to get Auth Cookie'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/auth/v1/login/'
     method: POST
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body:
       username: '{{ NCAE_USERNAME }}'
@@ -12,6 +12,6 @@
   register: login
 
 - name: 'Set the Authentication cookie for future usage'
-  set_fact:
+  ansible.builtin.set_fact:
     AUTH_COOKIE: 'sessionid={{ login["cookies"]["sessionid"] }}'
 ...

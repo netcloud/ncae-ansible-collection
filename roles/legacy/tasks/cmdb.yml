@@ -1,11 +1,11 @@
 ---
 - name: 'Update the NCAE CMDB'
-  uri:
+  ansible.builtin.uri:
     url: '{{ cmdb_url }}'
     method: PATCH
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body:
       callback_data: '{{ CMDB_DATA }}'

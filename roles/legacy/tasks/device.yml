@@ -1,24 +1,24 @@
 ---
 - name: 'Try to fetch the Device object for idempotency'
-  uri:
+  ansible.builtin.uri:
     url: "{{ NCAE_URL + '/api/dashboard/v1/device?name=' + DEVICE.name | urlencode }}"
     method: GET
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
   delegate_to: localhost
   register: device
 
 - name: 'Set the DEVICE id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     DEVICE_ID: "{{ device.json.results[0].id }}"
   when: device.json.results
 
 - name: 'Outer block'
   block:
     - name: 'If the object exists we remove the ID from the dict'
-      set_fact:
+      ansible.builtin.set_fact:
         CURRENT_DEVICE: '{{ CURRENT_DEVICE | combine({item.key: item.value}) }}'
       when: device.json.results and item.key not in ['id']
       loop: '{{ device.json.results[0] | dict2items }}'
@@ -31,12 +31,12 @@
         verbosity: 2
 
 - name: 'Update the device'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/dashboard/v1/device/{{ DEVICE_ID }}'
     method: PATCH
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body:
       id: '{{ DEVICE_ID }}'
@@ -47,12 +47,12 @@
   changed_when: true
 
 - name: 'Create the DEVICE'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/dashboard/v1/device'
     method: POST
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body: '{{ DEVICE }}'
     status_code: 200
@@ -62,7 +62,7 @@
   register: device_create_output
 
 - name: 'Set the device id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     DEVICE_ID: "{{ device_create_output.json.id }}"
   when: device_create_output.json is defined
 ...

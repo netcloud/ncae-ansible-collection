@@ -1,24 +1,24 @@
 ---
 - name: 'Try to fetch the service object for idempotency'
-  uri:
+  ansible.builtin.uri:
     url: "{{ NCAE_URL + '/api/automation/v1/service?name=' + SERVICE.name | urlencode }}"
     method: GET
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
   delegate_to: localhost
   register: service
 
 - name: 'Set the service id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     SERVICE_ID: "{{ service.json.results[0].id }}"
   when: service.json.results
 
 - name: 'Outer block'
   block:
     - name: 'If the object exists we remove the ID from the dict'
-      set_fact:
+      ansible.builtin.set_fact:
         CURRENT_SERVICE: '{{ CURRENT_SERVICE | combine({item.key: item.value}) }}'
       when: service.json.results and item.key not in ['id']
       loop: '{{ service.json.results[0] | dict2items }}'
@@ -32,12 +32,12 @@
 
 
 - name: 'Update the service'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/automation/v1/service/{{ SERVICE_ID }}'
     method: PATCH
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body: '{{ SERVICE }}'
   delegate_to: localhost
@@ -45,12 +45,12 @@
   changed_when: true
 
 - name: 'Create the service'
-  uri:
+  ansible.builtin.uri:
     url: '{{ NCAE_URL }}/api/automation/v1/service'
     method: POST
     headers:
       Cookie: '{{ AUTH_COOKIE }}'
-    validate_certs: no
+    validate_certs: false
     body_format: json
     body: '{{ SERVICE }}'
     status_code: 201
@@ -60,7 +60,7 @@
   register: service_create_output
 
 - name: 'Set the service id for future useage'
-  set_fact:
+  ansible.builtin.set_fact:
     SERVICE_ID: "{{ service_create_output.json.id }}"
   when: service_create_output.json is defined
 ...
