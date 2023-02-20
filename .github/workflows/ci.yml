@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
-    name: Ansible Lint
+    name: 'Lint :: Ansible'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,13 +14,59 @@ jobs:
         uses: ansible/ansible-lint-action@v6
 
   test-sanity:
-    name: Ansible Sanity Tests
+    name: 'Test :: Sanity'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
           path: ansible_collections/netcloud/ncae
       
-      - name: Run sanity tests
+      - name: Run ansible-test sanity
         run: ansible-test sanity --docker -v
         working-directory: ansible_collections/netcloud/ncae
+
+  docs-build:
+    name: 'Docs :: Build'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: ansible_collections/netcloud/ncae
+
+      - name: Install antsibull-docs
+        run: pip install antsibull-docs
+
+      - name: Generate Sphinx root for collection docs
+        run: mkdir dest && antsibull-docs sphinx-init --use-current --dest-dir dest netcloud.ncae
+        working-directory: ansible_collections/netcloud/ncae
+
+      - name: Install dependencies for Sphinx built
+        run: pip install -r requirements.txt
+        working-directory: ansible_collections/netcloud/ncae/dest
+
+      - name: Build documentation using Sphinx
+        run: ./build.sh
+        working-directory: ansible_collections/netcloud/ncae/dest
+        env:
+          ANSIBLE_COLLECTIONS_PATHS: ${GITHUB_WORKSPACE}/ansible_collections
+
+      - name: Build GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ansible_collections/netcloud/ncae/dest/build/html
+
+  docs-deploy:
+    name: 'Docs :: Deploy'
+    runs-on: ubuntu-latest
+    needs: docs-build
+    permissions:
+      id-token: write
+      pages: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    # Disabled until publication of repository due to lack of GH Pages support
+    if: ${{ false }}
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
