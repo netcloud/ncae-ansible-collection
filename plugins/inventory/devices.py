@@ -1,9 +1,13 @@
-from ansible.plugins.inventory import BaseInventoryPlugin
+# -*- coding: utf-8 -*-
+# Copyright (c) 2023 Netcloud AG
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import NcaeClient
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
 
 DOCUMENTATION = r"""
-    name: netcloud.ncae.devices
+    name: devices
     short_description: Uses NCAE as an inventory source for all devices.
     description:
         - This inventory plugin gathers all devices and associated groups from NCAE.
@@ -13,31 +17,43 @@ DOCUMENTATION = r"""
         - The IP address of the device is automatically used for 'ansible_host'.
         - The ID and name of the device are stored in 'ncae_device_id' and 'ncae_device_name' respectively.
     options:
-        ncae_base_url:
+        base_url:
             description: Base URL of NCAE instance to query without trailing slash
             type: string
             required: true
             env:
                 - name: NCAE_INVENTORY_BASE_URL
-        ncae_username:
+        username:
             description: Username for authenticating against NCAE
             type: string
             required: true
             env:
                 - name: NCAE_INVENTORY_USERNAME
-        ncae_password:
+        password:
             description: Password for authenticating against NCAE
             type: string
             required: true
             env:
                 - name: NCAE_INVENTORY_PASSWORD
-        ncae_validate_certs:
+        validate_certs:
             description: Whether to verify SSL certificates when connecting to NCAE
             type: bool
             default: true
             env:
                 - name: NCAE_INVENTORY_VALIDATE_CERTS
 """
+
+EXAMPLES = """
+# Sample configuration for NCAE devices inventory
+    plugin: netcloud.ncae.devices
+    base_url: https://ncae.example.com
+    username: admin
+    password: secret
+    validate_certs: true
+"""
+
+from ansible.plugins.inventory import BaseInventoryPlugin
+from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import NcaeClient
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -78,10 +94,10 @@ class InventoryModule(BaseInventoryPlugin):
     def _get_ncae_client(self):
         if self._client is None:
             self._client = NcaeClient(
-                base_url=self.get_option("ncae_base_url"),
-                username=self.get_option("ncae_username"),
-                password=self.get_option("ncae_password"),
-                validate_certs=self.get_option("ncae_validate_certs"),
+                base_url=self.get_option("base_url"),
+                username=self.get_option("username"),
+                password=self.get_option("password"),
+                validate_certs=self.get_option("validate_certs"),
             )
 
         return self._client
