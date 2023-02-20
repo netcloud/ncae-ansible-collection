@@ -2,7 +2,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  ansible-lint:
+  lint:
     name: Ansible Lint
     runs-on: ubuntu-latest
     steps:
@@ -13,8 +13,8 @@ jobs:
       - name: Run ansible-lint
         uses: ansible/ansible-lint-action@v6
 
-  ansible-test:
-    name: Ansible Test
+  test-sanity:
+    name: Ansible Sanity Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

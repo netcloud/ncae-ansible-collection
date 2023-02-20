@@ -38,7 +38,7 @@ class NcaeClient:
 
 
 class NcaeSession:
-    def __init__(self, *, base_url, timeout=60, validate_certs=True):
+    def __init__(self, base_url, timeout=60, validate_certs=True):
         self._base_url = base_url.strip("/")
         self._http_client = Request(
             http_agent="NCAE Ansible Client",
@@ -60,12 +60,9 @@ class NcaeSession:
             headers={"Content-Type": "application/json"},
         )
 
-    def _request(self, method, url, *args, **kwargs):
+    def _request(self, method, url, **kwargs):
         response = self._http_client.open(
-            method=method,
-            url=urljoin(self._base_url, url),
-            *args,
-            **kwargs,
+            method=method, url=urljoin(self._base_url, url), **kwargs
         )
 
         return json.loads(response.read())
