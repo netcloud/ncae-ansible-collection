@@ -1,0 +1,55 @@
+---
+- name: 'Try to fetch the phase object for idempotency'
+  uri:
+    url: "{{ NCAE_URL + '/api/automation/v1/phase?service=' + SERVICE_ID + '&name=' + PHASE.name | urlencode }}"
+    method: GET
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: phase
+
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_PHASE: '{{ CURRENT_PHASE | combine({item.key: item.value}) }}'
+      when: phase.json.results and item.key not in ['id']
+      loop: '{{ phase.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if phase.json.results length equals 0. Compare: {{ phase.json.results | length }}'
+        verbosity: 2
+
+- name: 'Update the phase'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/phase/{{ phase.json.results[0].id }}'
+    method: PATCH
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ PHASE }}'
+  delegate_to: localhost
+  when: CURRENT_PHASE != PHASE and phase.json.results
+  changed_when: true
+
+- name: 'Create the phase'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/phase'
+    method: POST
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: '{{ PHASE | combine({"service_id": SERVICE_ID, "ext_api_service_id": EXT_API_SERVICE_ID}) }}'
+    status_code: 201
+  delegate_to: localhost
+  when: not phase.json.results
+  changed_when: true
+  register: phase_create_output
+...

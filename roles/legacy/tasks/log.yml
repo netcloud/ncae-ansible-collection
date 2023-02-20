@@ -1,0 +1,26 @@
+---
+- name: Raise a error when the STATUS is not valid
+  fail:
+    msg: '{{ LOG_STATUS }} is not a valid status!'
+  when: LOG_STATUS not in VALID_LOG_STATUS
+
+- name: 'Creating a log entry on the NCAE appliance'
+  uri:
+    url: '{{ logger_url }}'
+    method: POST
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    status_code: 201
+    body:
+      publish: true
+      timestamp: "{{ lookup('pipe','date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+      log_title: '{{ LOG_TITLE }}'
+      log_hostname: '{{ LOG_HOSTNAME }}'
+      log_text: '{{ LOG_TEXT }}'
+      status: '{{ LOG_STATUS }}'
+      service_id: '{{ service_id }}'
+      service_instance_id: '{{ service_instance_id }}'
+  delegate_to: localhost
+...

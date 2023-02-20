@@ -1,0 +1,29 @@
+---
+galaxy_info:
+  author: Richard Strnad
+  role_name: ncae
+  description: This role provides helper tasks for the Netcloud Automation Engine (NCAE)
+  company: Netcloud AG
+  license: license (MIT)
+  min_ansible_version: 2.8
+  platforms:
+    - name: Fedora
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - all
+    - name: GenericUNIX
+      versions:
+        - all
+        - any
+  galaxy_tags:
+    - ncae
+    - netcloud
+    - network
+    - automation
+  dependencies:
+    - ansible.builtin.uri

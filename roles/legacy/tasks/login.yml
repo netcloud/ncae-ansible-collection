@@ -1,0 +1,17 @@
+---
+- name: 'Try to login to NCAE to get Auth Cookie'
+  uri:
+    url: '{{ NCAE_URL }}/api/auth/v1/login/'
+    method: POST
+    validate_certs: no
+    body_format: json
+    body:
+      username: '{{ NCAE_USERNAME }}'
+      password: '{{ NCAE_PASSWORD }}'
+  delegate_to: localhost
+  register: login
+
+- name: 'Set the Authentication cookie for future usage'
+  set_fact:
+    AUTH_COOKIE: 'sessionid={{ login["cookies"]["sessionid"] }}'
+...

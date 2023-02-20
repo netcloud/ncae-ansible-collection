@@ -1,0 +1,70 @@
+---
+- name: 'Try to fetch the ext api service object for idempotency'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/ext-api-service?name={{ EXT_SERVICE.name }}'
+    method: GET
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+  delegate_to: localhost
+  register: ext_api_service
+
+- name: 'Set the service id for future useage'
+  set_fact:
+    EXT_API_SERVICE_ID: "{{ ext_api_service.json.results[0].id }}"
+  when: ext_api_service.json.results
+
+- name: 'Outer block'
+  block:
+    - name: 'If the object exists we remove the ID from the dict'
+      set_fact:
+        CURRENT_EXT_SERVICE: '{{ CURRENT_EXT_SERVICE | combine({item.key: item.value}) }}'
+      when: ext_api_service.json.results and item.key not in ['id']
+      loop: '{{ ext_api_service.json.results[0] | dict2items }}'
+      loop_control:
+        label: '{{ item.key }}'
+  rescue:
+    - name: Handling problem that multiple when does not work properly
+      ansible.builtin.debug:
+        msg: 'Caught a known error, happens if ext_api_service.json.results length equals 0. Compare: {{ ext_api_service.json.results | length }}'
+        verbosity: 2
+
+- name: 'Prepare Body param'
+  set_fact:
+    BODY_VAL: "{{ EXT_SERVICE | combine({'auth_id':AUTH_ID}) }}"
+  changed_when: True
+
+- name: 'Update the ext-api-service'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/ext-api-service/{{ EXT_API_SERVICE_ID }}'
+    method: PATCH
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: "{{ BODY_VAL }}"
+  delegate_to: localhost
+  when: CURRENT_EXT_SERVICE != EXT_SERVICE and ext_api_service.json.results
+  changed_when: true
+
+- name: 'Create the ext-api-service'
+  uri:
+    url: '{{ NCAE_URL }}/api/automation/v1/ext-api-service'
+    method: POST
+    headers:
+      Cookie: '{{ AUTH_COOKIE }}'
+    validate_certs: no
+    body_format: json
+    body: "{{ BODY_VAL }}"
+    status_code: 201
+  delegate_to: localhost
+  when: not ext_api_service.json.results
+  changed_when: true
+  register: ext_api_service_create_output
+
+- name: 'Set the ext-api-servic id for future useage'
+  set_fact:
+    EXT_API_SERVICE_ID: "{{ ext_api_service_create_output.json.id }}"
+  when: ext_api_service_create_output.json is defined
+...
