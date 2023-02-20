@@ -1,5 +1,7 @@
 # Ansible
+/dest
 /tests/output
+/*.tar.gz
 
 # Python
 __pycache__/
