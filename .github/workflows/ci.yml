@@ -2,7 +2,7 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build:
+  ansible-lint:
     name: Ansible Lint
     runs-on: ubuntu-latest
     steps:
@@ -12,3 +12,15 @@ jobs:
       
       - name: Run ansible-lint
         uses: ansible/ansible-lint-action@v6
+
+  ansible-test:
+    name: Ansible Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: ansible_collections/netcloud/ncae
+      
+      - name: Run sanity tests
+        run: ansible-test sanity --docker -v
+        working-directory: ansible_collections/netcloud/ncae
