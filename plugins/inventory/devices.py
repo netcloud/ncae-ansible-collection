@@ -22,25 +22,26 @@ DOCUMENTATION = r"""
             type: string
             required: true
             env:
-                - name: NCAE_INVENTORY_BASE_URL
+                - name: NCAE_BASE_URL
+                - name: NCAE_URL
         username:
             description: Username for authenticating against NCAE
             type: string
             required: true
             env:
-                - name: NCAE_INVENTORY_USERNAME
+                - name: NCAE_USERNAME
         password:
             description: Password for authenticating against NCAE
             type: string
             required: true
             env:
-                - name: NCAE_INVENTORY_PASSWORD
+                - name: NCAE_PASSWORD
         validate_certs:
             description: Whether to verify SSL certificates when connecting to NCAE
             type: bool
             default: true
             env:
-                - name: NCAE_INVENTORY_VALIDATE_CERTS
+                - name: NCAE_VALIDATE_CERTS
 """
 
 EXAMPLES = """
