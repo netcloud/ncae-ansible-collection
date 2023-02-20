@@ -4,6 +4,7 @@ name: ncae
 version: 1.0.0
 readme: README.md
 authors:
+  - Andreas Graber <graber@netcloud.ch>
   - Pascal Mathis <mathis@netcloud.ch>
   - Richard Strnad <strnad@netcloud.ch>
 description: Ansible collection for interacting with Netcloud Automation Engine (NCAE)
