@@ -15,7 +15,6 @@
             "name": "device-multi",
             "verify_tls": false,
             "groups": [
-                1,
                 2,
                 3
             ]

@@ -18,48 +18,58 @@ DOCUMENTATION = r"""
         - Additional device facts are prefixed by I(facts_prefix).
     options:
         ncae_base_url:
-            description: Base URL of NCAE instance to query without trailing slash
+            description: Base URL of NCAE instance to query without trailing slash.
             type: string
             required: true
             env:
                 - name: NCAE_BASE_URL
                 - name: NCAE_URL
         ncae_username:
-            description: Username for authenticating against NCAE
+            description: Username for authenticating against NCAE.
             type: string
             required: true
             env:
                 - name: NCAE_USERNAME
         ncae_password:
-            description: Password for authenticating against NCAE
+            description: Password for authenticating against NCAE.
             type: string
             required: true
             env:
                 - name: NCAE_PASSWORD
-        device_prefix:
-            description: Prefix to be used in front of device ids
-            type: string
-            default: ncae_device_
-            env:
-                - name: NCAE_DEVICE_PREFIX
-        group_prefix:
-            description: Prefix to be used in front of group slugs
-            type: string
-            default: ncae_group_
-            env:
-                - name: NCAE_GROUP_PREFIX
-        facts_prefix:
-            description: Prefix to be used in front of device facts
-            type: string
-            default: ncae_
-            env:
-                - name: NCAE_FACTS_PREFIX
         validate_certs:
-            description: Whether to verify SSL certificates for API connections
+            description: Whether to verify SSL certificates for API connections.
             type: bool
             default: true
             env:
                 - name: NCAE_VALIDATE_CERTS
+        device_prefix:
+            description: Prefix to be used in front of device ids.
+            type: string
+            default: ncae_device_
+            env:
+                - name: NCAE_INVENTORY_DEVICE_PREFIX
+        group_prefix:
+            description: Prefix to be used in front of group slugs.
+            type: string
+            default: ncae_group_
+            env:
+                - name: NCAE_INVENTORY_GROUP_PREFIX
+        facts_prefix:
+            description: Prefix to be used in front of device facts.
+            type: string
+            default: ncae_
+            env:
+                - name: NCAE_INVENTORY_FACTS_PREFIX
+        nest_groups:
+            description:
+                - Specifies whether a group should contain hosts associated with child groups.
+                - When enabled, the behavior matches with regular YAML/INI inventories containing nested groups.
+                - When disabled, hosts are only added to groups they directly belong to.
+            type: bool
+            default: true
+            env:
+                - name: NCAE_INVENTORY_NEST_GROUPS
+
 """
 
 EXAMPLES = """
@@ -71,6 +81,7 @@ EXAMPLES = """
     validate_certs: true
 """
 
+from collections import defaultdict
 from ansible.module_utils.six import iteritems
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import NcaeClient
@@ -85,6 +96,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._device_prefix = None
         self._group_prefix = None
         self._facts_prefix = None
+        self._nest_groups = None
 
     def parse(self, inventory, loader, path, cache=True):
         # Initialize state and config for inventory plugin
@@ -95,6 +107,7 @@ class InventoryModule(BaseInventoryPlugin):
         self._device_prefix = self.get_option("device_prefix")
         self._group_prefix = self.get_option("group_prefix")
         self._facts_prefix = self.get_option("facts_prefix")
+        self._nest_groups = self.get_option("nest_groups")
 
         # Actually populate inventory
         self._populate()
@@ -106,10 +119,16 @@ class InventoryModule(BaseInventoryPlugin):
 
         # Add device groups to Ansible inventory
         group_map = {}
+        group_parents = defaultdict(list)
         for group in groups:
+            # Generate group name and add to inventory
             group_name = self._group_prefix + group["tree_slug"]
             group_map[group["id"]] = group_name
             self.inventory.add_group(group_name)
+
+            # Persist parents associated with given group
+            # The last element in tree_path is the node itself and not a parent
+            group_parents[group["id"]] = group["tree_path"][:-1]
 
         # Add devices to Ansible inventory
         for device in devices:
@@ -130,9 +149,14 @@ class InventoryModule(BaseInventoryPlugin):
                     device_name, self._facts_prefix + fact_key, fact_value
                 )
 
-            # Add device as child to all associated device groups
+            # Associate device with all its directly attached groups
             for group_id in device["groups"]:
                 self.inventory.add_child(group_map[group_id], device_name)
+
+                # Associate device with all parent groups if enabled
+                if self._nest_groups:
+                    for parent_id in group_parents[group_id]:
+                        self.inventory.add_child(group_map[parent_id], device_name)
 
     def _get_ncae_client(self):
         if self._client is None:
