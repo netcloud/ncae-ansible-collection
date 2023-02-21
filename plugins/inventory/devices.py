@@ -40,14 +40,20 @@ DOCUMENTATION = r"""
             description: Prefix to be used in front of device ids
             type: string
             default: ncae_device_
+            env:
+                - name: NCAE_DEVICE_PREFIX
         group_prefix:
             description: Prefix to be used in front of group slugs
             type: string
             default: ncae_group_
+            env:
+                - name: NCAE_GROUP_PREFIX
         facts_prefix:
             description: Prefix to be used in front of device facts
             type: string
             default: ncae_
+            env:
+                - name: NCAE_FACTS_PREFIX
         validate_certs:
             description: Whether to verify SSL certificates for API connections
             type: bool
