@@ -1,0 +1,4 @@
+---
+ncae_base_url: ${NCAE_BASE_URL}
+ncae_username: ${NCAE_USERNAME}
+ncae_password: ${NCAE_PASSWORD}

@@ -1,5 +1,7 @@
 # Ansible
 /dest
+/tests/integration/integration_config.yml
+/tests/integration/inventory
 /tests/output
 /*.tar.gz
 

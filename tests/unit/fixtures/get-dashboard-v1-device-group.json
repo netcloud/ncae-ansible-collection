@@ -1,0 +1,77 @@
+{
+    "count": 4,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 1,
+            "name": "Offices",
+            "slug": "offices",
+            "is_protected": false,
+            "parent": null,
+            "tree_name": "Offices",
+            "tree_slug": "offices",
+            "tree_path": [
+                1
+            ],
+            "tree_depth": 0,
+            "device_set": [
+                1,
+                2
+            ]
+        },
+        {
+            "id": 2,
+            "name": "Basel",
+            "slug": "basel",
+            "is_protected": false,
+            "parent": 1,
+            "tree_name": "Offices \\ Basel",
+            "tree_slug": "offices__basel",
+            "tree_path": [
+                1,
+                2
+            ],
+            "tree_depth": 1,
+            "device_set": [
+                1,
+                3
+            ]
+        },
+        {
+            "id": 3,
+            "name": "Bern",
+            "slug": "bern",
+            "is_protected": false,
+            "parent": 1,
+            "tree_name": "Offices \\ Bern",
+            "tree_slug": "offices__bern",
+            "tree_path": [
+                1,
+                3
+            ],
+            "tree_depth": 1,
+            "device_set": [
+                1,
+                4
+            ]
+        },
+        {
+            "id": 4,
+            "name": "Winterthur",
+            "slug": "winterthur",
+            "is_protected": false,
+            "parent": 1,
+            "tree_name": "Offices \\ Winterthur",
+            "tree_slug": "offices__winterthur",
+            "tree_path": [
+                1,
+                4
+            ],
+            "tree_depth": 1,
+            "device_set": [
+                5
+            ]
+        }
+    ]
+}

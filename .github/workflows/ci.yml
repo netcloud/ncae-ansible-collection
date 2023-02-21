@@ -29,12 +29,38 @@ jobs:
         run: ansible-test sanity --docker -v
         working-directory: ansible_collections/netcloud/ncae
 
+  test-unit:
+    name: 'Test :: Unit'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: ansible_collections/netcloud/ncae
+      
+      - name: Run ansible-test units
+        run: ansible-test units --docker -v
+        working-directory: ansible_collections/netcloud/ncae
+
+  test-integration:
+    name: 'Test :: Integration'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: ansible_collections/netcloud/ncae
+      
+      - name: Run ansible-test integration
+        run: ansible-test integration --docker -v
+        working-directory: ansible_collections/netcloud/ncae
+
   galaxy-build:
     name: 'Galaxy :: Build'
     runs-on: ubuntu-latest
     needs:
       - lint
       - test-sanity
+      - test-unit
+      - test-integration
     outputs:
       version: ${{ env.GALAXY_VERSION }}
     steps:

@@ -1,0 +1,84 @@
+{
+    "count": 5,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "device_model": {
+                "id": 1,
+                "name": "Generic",
+                "app_label": "device_generic",
+                "model": "GenericDevice"
+            },
+            "id": 1,
+            "ip": "192.168.254.1",
+            "name": "device-multi",
+            "verify_tls": false,
+            "groups": [
+                1,
+                2,
+                3
+            ]
+        },
+        {
+            "device_model": {
+                "id": 1,
+                "name": "Generic",
+                "app_label": "device_generic",
+                "model": "GenericDevice"
+            },
+            "id": 2,
+            "ip": "192.168.254.2",
+            "name": "device-global",
+            "verify_tls": false,
+            "groups": [
+                1
+            ]
+        },
+        {
+            "device_model": {
+                "id": 1,
+                "name": "Generic",
+                "app_label": "device_generic",
+                "model": "GenericDevice"
+            },
+            "id": 3,
+            "ip": "192.168.254.10",
+            "name": "device-basel",
+            "verify_tls": false,
+            "groups": [
+                2
+            ]
+        },
+        {
+            "device_model": {
+                "id": 1,
+                "name": "Generic",
+                "app_label": "device_generic",
+                "model": "GenericDevice"
+            },
+            "id": 4,
+            "ip": "192.168.254.20",
+            "name": "device-bern",
+            "verify_tls": false,
+            "groups": [
+                3
+            ]
+        },
+        {
+            "device_model": {
+                "id": 1,
+                "name": "Generic",
+                "app_label": "device_generic",
+                "model": "GenericDevice"
+            },
+            "id": 5,
+            "ip": "192.168.254.30",
+            "name": "device-winterthur",
+            "verify_tls": false,
+            "groups": [
+                4
+            ]
+        }
+    ]
+}
