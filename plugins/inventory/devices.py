@@ -11,33 +11,45 @@ DOCUMENTATION = r"""
     short_description: Uses NCAE as an inventory source for all devices.
     description:
         - This inventory plugin gathers all devices and associated groups from NCAE.
-        - All devices are automatically added as Ansible hosts, named 'device_<id>'.
-        - All groups are automatically added to the inventory, named 'group_<full slug>'.
+        - All devices are automatically added as Ansible hosts with their ID prefixed by I(device_prefix).
+        - All groups are automatically added to the inventory with their slug prefixed by I(group_prefix).
         - Devices are automatically linked to their associated groups.
         - The IP address of the device is automatically used for 'ansible_host'.
-        - The ID and name of the device are stored in 'ncae_device_id' and 'ncae_device_name' respectively.
+        - Additional device facts are prefixed by I(facts_prefix).
     options:
-        base_url:
+        ncae_base_url:
             description: Base URL of NCAE instance to query without trailing slash
             type: string
             required: true
             env:
                 - name: NCAE_BASE_URL
                 - name: NCAE_URL
-        username:
+        ncae_username:
             description: Username for authenticating against NCAE
             type: string
             required: true
             env:
                 - name: NCAE_USERNAME
-        password:
+        ncae_password:
             description: Password for authenticating against NCAE
             type: string
             required: true
             env:
                 - name: NCAE_PASSWORD
+        device_prefix:
+            description: Prefix to be used in front of device ids
+            type: string
+            default: ncae_device_
+        group_prefix:
+            description: Prefix to be used in front of group slugs
+            type: string
+            default: ncae_group_
+        facts_prefix:
+            description: Prefix to be used in front of device facts
+            type: string
+            default: ncae_
         validate_certs:
-            description: Whether to verify SSL certificates when connecting to NCAE
+            description: Whether to verify SSL certificates for API connections
             type: bool
             default: true
             env:
@@ -47,12 +59,13 @@ DOCUMENTATION = r"""
 EXAMPLES = """
 # Sample configuration for NCAE devices inventory
     plugin: netcloud.ncae.devices
-    base_url: https://ncae.example.com
-    username: admin
-    password: secret
+    ncae_base_url: https://ncae.example.com
+    ncae_username: admin
+    ncae_password: secret
     validate_certs: true
 """
 
+from ansible.module_utils.six import iteritems
 from ansible.plugins.inventory import BaseInventoryPlugin
 from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import NcaeClient
 
@@ -63,12 +76,24 @@ class InventoryModule(BaseInventoryPlugin):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._client = None
+        self._device_prefix = None
+        self._group_prefix = None
+        self._facts_prefix = None
 
     def parse(self, inventory, loader, path, cache=True):
         # Initialize state and config for inventory plugin
         super().parse(inventory, loader, path, cache)
         self._read_config_data(path)
 
+        # Read module configuration
+        self._device_prefix = self.get_option("device_prefix")
+        self._group_prefix = self.get_option("group_prefix")
+        self._facts_prefix = self.get_option("facts_prefix")
+
+        # Actually populate inventory
+        self._populate()
+
+    def _populate(self):
         # Fetch list of all devices and groups from NCAE
         devices = self._get_ncae_client().list_simple_devices()
         groups = self._get_ncae_client().list_device_groups()
@@ -76,17 +101,28 @@ class InventoryModule(BaseInventoryPlugin):
         # Add device groups to Ansible inventory
         group_map = {}
         for group in groups:
-            group_name = f"group_{group['tree_slug']}"
+            group_name = self._group_prefix + group["tree_slug"]
             group_map[group["id"]] = group_name
             self.inventory.add_group(group_name)
 
         # Add devices to Ansible inventory
         for device in devices:
-            device_name = f"device_{device['id']}"
+            # Generate device name and facts for Ansible inventory
+            device_name = self._device_prefix + str(device["id"])
+            facts = {
+                "device_id": device["id"],
+                "device_name": device["name"],
+            }
+
+            # Add device to inventory and configure IP as target host
             self.inventory.add_host(device_name)
-            self.inventory.set_variable(device_name, "ncae_device_id", device["id"])
-            self.inventory.set_variable(device_name, "ncae_device_name", device["name"])
             self.inventory.set_variable(device_name, "ansible_host", device["ip"])
+
+            # Add facts to device with configured prefix
+            for fact_key, fact_value in iteritems(facts):
+                self.inventory.set_variable(
+                    device_name, self._facts_prefix + fact_key, fact_value
+                )
 
             # Add device as child to all associated device groups
             for group_id in device["groups"]:
@@ -95,9 +131,9 @@ class InventoryModule(BaseInventoryPlugin):
     def _get_ncae_client(self):
         if self._client is None:
             self._client = NcaeClient(
-                base_url=self.get_option("base_url"),
-                username=self.get_option("username"),
-                password=self.get_option("password"),
+                base_url=self.get_option("ncae_base_url"),
+                username=self.get_option("ncae_username"),
+                password=self.get_option("ncae_password"),
                 validate_certs=self.get_option("validate_certs"),
             )
 
