@@ -7,8 +7,11 @@ Documentation about all the modules and plugins provided by this Ansible collect
 
 As of today, only the inventory plugin `devices` is being provided. All other functionality to interact with NCAE still remains within the `legacy` role, which offers various tasks that can be individually included into your playbook. To find more information about this role, check out [the README file](roles/legacy/README.md) within the directory `roles/legacy`.
 
+## Contributing
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests to this project.
+
 ## Versioning
-This repository uses [Semantic Versioning](https://semver.org/).
+This repository uses [Semantic Versioning](https://semver.org/) as its versioning policy. You can quickly view all available versions by checking the [available tags](https://github.com/netcloud/ncae-ansible-collection/tags) on this repository.
 
 ## License
 GNU General Public License v3.0 - see [COPYING](COPYING) for further details.
