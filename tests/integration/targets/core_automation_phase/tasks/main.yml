@@ -1,0 +1,209 @@
+# Copyright (c) 2023 Netcloud AG
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test netcloud.ncae.core_automation_phase
+  module_defaults:
+    group/netcloud.ncae.ncae:
+      ncae_base_url: '{{ ncae_base_url }}'
+      ncae_username: '{{ ncae_username }}'
+      ncae_password: '{{ ncae_password }}'
+  block:
+    - name: Create related automation.Service
+      netcloud.ncae.core_automation_service:
+        state: present
+        name: PHASE-SERVICE
+        description: Phase Service
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+        module_name: ACI-Module
+      register: _service
+
+    - name: Create related automation.Auth
+      netcloud.ncae.core_automation_auth:
+        state: present
+        name: PHASE-EXT-API-AUTH
+        type: Basic
+        auth_username: admin
+        auth_value: topsecret
+      register: _auth
+
+    - name: Create related automation.ExtApiService
+      netcloud.ncae.core_automation_ext_api_service:
+        state: present
+        name: PHASE-EXT-API
+        base_url: http://localhost
+        auth_id: '{{ _auth.id }}'
+      register: _ext_api_service
+
+    - name: Create instance A
+      netcloud.ncae.core_automation_phase: &ia-create
+        state: present
+        order: 1
+        name: PHASE-A
+        text: Phase A
+        service_id: '{{ _service.id }}'
+        ext_api_service_id: '{{ _ext_api_service.id }}'
+        uri: /ia/deploy
+        decom_uri: /ia/teardown
+      register: _ia_create
+
+    - name: Create instance B
+      netcloud.ncae.core_automation_phase: &ib-create
+        state: present
+        order: 2
+        name: PHASE-B
+        text: Phase B
+        service_id: '{{ _service.id }}'
+        ext_api_service_id: '{{ _ext_api_service.id }}'
+        auto_deploy: true
+        idempotency: true
+        uri: /ib
+        uri_reverse_capable: true
+      register: _ib_create
+
+    - name: Assert instance creation
+      ansible.builtin.assert:
+        that:
+          - _ia_create.id != _ib_create.id
+          # Instance A
+          - _ia_create is changed
+          - _ia_create.change_reason == "created"
+          - _ia_create.id == _ia_create.id
+          - _ia_create.data.order == 1
+          - _ia_create.data.name == "PHASE-A"
+          - _ia_create.data.text == "Phase A"
+          - _ia_create.data.uri == "/ia/deploy"
+          - _ia_create.data.decom_uri == "/ia/teardown"
+          - _ia_create.data.auto_deploy == false
+          - _ia_create.data.idempotency == false
+          - _ia_create.data.uri_reverse_capable == false
+          # Instance B
+          - _ib_create is changed
+          - _ib_create.change_reason == "created"
+          - _ib_create.data.order == 2
+          - _ib_create.data.name == "PHASE-B"
+          - _ib_create.data.text == "Phase B"
+          - _ib_create.data.uri == "/ib"
+          - _ib_create.data.auto_deploy == true
+          - _ib_create.data.idempotency == true
+          - _ib_create.data.uri_reverse_capable == true
+
+    - name: Update instance A with same values by order
+      netcloud.ncae.core_automation_phase:
+        <<: *ia-create
+      register: _ia_create_again
+
+    - name: Update instance B with same values by ID
+      netcloud.ncae.core_automation_phase:
+        <<: *ib-create
+      register: _ib_create_again
+
+    - name: Assert instance idempotency
+      ansible.builtin.assert:
+        that:
+          - _ia_create_again is succeeded
+          - _ia_create_again is not changed
+          - _ia_create_again.id == _ia_create.id
+          - _ib_create_again is succeeded
+          - _ib_create_again is not changed
+          - _ib_create_again.id == _ib_create.id
+
+    - name: Update instance A by order
+      netcloud.ncae.core_automation_phase:
+        state: present
+        order: 1
+        name: PHASE-A-NEW
+        text: Phase A NEW
+        service_id: '{{ _service.id }}'
+        ext_api_service_id: '{{ _ext_api_service.id }}'
+        uri: /ia-new/deploy
+        decom_uri: /ia-new/teardown
+      register: _ia_update
+
+    - name: Update instance B by id
+      netcloud.ncae.core_automation_phase:
+        state: present
+        id: '{{ _ib_create.id }}'
+        order: 3
+        name: PHASE-B-NEW
+        text: Phase B NEW
+        service_id: '{{ _service.id }}'
+        ext_api_service_id: '{{ _ext_api_service.id }}'
+        auto_deploy: true
+        idempotency: true
+        uri: /ib-new
+        uri_reverse_capable: true
+      register: _ib_update
+
+    - name: Assert instance update
+      ansible.builtin.assert:
+        that:
+          # Instance A
+          - _ia_update is changed
+          - _ia_update.change_reason == "updated"
+          - _ia_update.id == _ia_create.id
+          - _ia_update.data.order == 1
+          - _ia_update.data.name == "PHASE-A-NEW"
+          - _ia_update.data.text == "Phase A NEW"
+          - _ia_update.data.uri == "/ia-new/deploy"
+          - _ia_update.data.decom_uri == "/ia-new/teardown"
+          - _ia_update.data.auto_deploy == false
+          - _ia_update.data.idempotency == false
+          - _ia_update.data.uri_reverse_capable == false
+          # Instance B
+          - _ib_update is changed
+          - _ib_update.change_reason == "updated"
+          - _ib_update.id == _ib_create.id
+          - _ib_update.data.order == 3
+          - _ib_update.data.name == "PHASE-B-NEW"
+          - _ib_update.data.text == "Phase B NEW"
+          - _ib_update.data.uri == "/ib-new"
+          - _ib_update.data.auto_deploy == true
+          - _ib_update.data.idempotency == true
+          - _ib_update.data.uri_reverse_capable == true
+
+    - name: Delete instance A by order
+      netcloud.ncae.core_automation_phase:
+        state: absent
+        order: 1
+        service_id: '{{ _service.id }}'
+      register: _ia_delete
+
+    - name: Delete instance B by ID
+      netcloud.ncae.core_automation_phase:
+        state: absent
+        id: '{{ _ib_create.id }}'
+      register: _ib_delete
+
+    - name: Assert instance deletion
+      ansible.builtin.assert:
+        that:
+          - _ia_delete is changed
+          - _ia_delete.change_reason == "deleted"
+          - _ib_delete is changed
+          - _ib_delete.change_reason == "deleted"
+
+    - name: Delete instance A by order again
+      netcloud.ncae.core_automation_phase:
+        state: absent
+        order: 1
+        service_id: '{{ _service.id }}'
+      register: _ia_delete_again
+
+    - name: Delete instance B by ID again
+      netcloud.ncae.core_automation_phase:
+        state: absent
+        id: '{{ _ib_create.id }}'
+      register: _ib_delete_again
+
+    - name: Assert instance deletion idempotency
+      ansible.builtin.assert:
+        that:
+          - _ia_delete_again is succeeded
+          - _ia_delete_again is not changed
+          - _ib_delete_again is succeeded
+          - _ib_delete_again is not changed

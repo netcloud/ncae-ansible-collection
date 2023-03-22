@@ -5,6 +5,7 @@ default:
 variables:
   GIT_CLONE_PATH: ${CI_BUILDS_DIR}/ansible_collections/netcloud/ncae
   PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.cache/pip
+  CI_DEBUG_SERVICES: "true"
 
 stages:
   - build
@@ -17,7 +18,7 @@ devct-build:
   needs: []
   image:
     name: gcr.io/kaniko-project/executor:v1.9.1-debug
-    entrypoint: ['']
+    entrypoint: [""]
   script:
     - /kaniko/executor
       --context "${CI_PROJECT_DIR}"
@@ -132,7 +133,42 @@ ansible-test-integration:
     - devct-build
     - ansible-lint
   script:
+    - envsubst >tests/integration/integration_config.yml <tests/integration/integration_config.yml.template
     - ansible-test integration --venv
+  variables:
+    FF_NETWORK_PER_BUILD: 1
+    NCAE_BASE_URL: http://ncae-core:8000
+    NCAE_USERNAME: admin
+    NCAE_PASSWORD: integration
+  services:
+    - name: docker.io/library/postgres:15
+      alias: postgres
+      variables:
+        POSTGRES_DB: ncae
+        POSTGRES_USER: integration
+        POSTGRES_PASSWORD: testing
+
+    - name: harbor-01.netcloud.lab/ncae/ncae-core:R1.2-13
+      alias: ncae-core
+      entrypoint: ["/bin/bash", "-c"]
+      command:
+        - |
+          python3 manage.py migrate
+          python3 manage.py createsuperuser --noinput
+          tools/run_prod.sh
+      variables:
+        DJANGO_ALLOWED_HOSTS: "*"
+        DJANGO_SECRET_KEY: ncae-integration-testing
+        DJANGO_DEBUG: "true"
+        DJANGO_SUPERUSER_USERNAME: admin
+        DJANGO_SUPERUSER_PASSWORD: integration
+        DJANGO_SUPERUSER_EMAIL: admin@localhost
+        BACKEND_HOST: ncae-core
+        BACKEND_PORT: 8000
+        DB_IP: postgres
+        DB_NAME: ncae
+        DB_USER: integration
+        DB_PW: testing
 
 docs-release:
   stage: release

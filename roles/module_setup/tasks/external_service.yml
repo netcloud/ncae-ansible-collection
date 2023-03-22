@@ -1,0 +1,32 @@
+---
+- name: Log to NCAE
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module
+    tasks_from: log
+  vars:
+    log_title: 'NCAE External Service: {{ external_service_name }}'
+    log_text: 'Ensuring that external service [{{ external_service_name }}] and associated objects have correct state'
+
+- name: Manage NCAE external service auth for {{ external_service_name }}
+  netcloud.ncae.core_automation_auth:
+    name: '{{ external_service_auth_name }}'
+    type: '{{ external_service_auth_type }}'
+    auth_username: '{{ external_service_auth_username }}'
+    auth_value: '{{ external_service_auth_value }}'
+  register: _ncae_external_service_auth
+
+- name: Manage NCAE external service {{ external_service_name }}
+  netcloud.ncae.core_automation_ext_api_service:
+    name: '{{ external_service_name }}'
+    description: '{{ external_service_description | default("", true) }}'
+    base_url: '{{ external_service_base_url }}'
+    auth_id: '{{ _ncae_external_service_auth.id }}'
+  register: _ncae_external_service
+
+- name: Register outputs
+  ansible.builtin.set_fact:
+    '{{ register }}': >-
+      {{ _ncae_external_service | combine({
+          "auth": _ncae_external_service_auth,
+      }) }}
+  when: register is defined

@@ -1,0 +1,58 @@
+# Copyright (c) 2023 Netcloud AG
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test netcloud.ncae.module_log
+  module_defaults:
+    group/netcloud.ncae.ncae:
+      ncae_base_url: '{{ ncae_base_url }}'
+      ncae_username: '{{ ncae_username }}'
+      ncae_password: '{{ ncae_password }}'
+  block:
+    - name: Create related automation.Service
+      netcloud.ncae.core_automation_service:
+        state: present
+        name: LOG-SERVICE
+        description: Phase Service
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+        module_name: ACI-Module
+      register: _service
+
+    - name: Create related automation.ServiceInstance
+      netcloud.ncae.core_automation_service_instance:
+        state: present
+        service_id: '{{ _service.id }}'
+        data:
+          name: LOG-SERVICE-INSTANCE
+      register: _service_instance
+
+    - name: Send informational log message
+      netcloud.ncae.module_log:
+        level: info
+        hostname: localhost
+        title: Information
+        text: Just so you know
+        service_id: '{{ _service.id }}'
+        service_instance_id: '{{ _service_instance.id }}'
+
+    - name: Send warning log message
+      netcloud.ncae.module_log:
+        level: warning
+        hostname: localhost
+        title: Warning
+        text: Better be careful
+        service_id: '{{ _service.id }}'
+        service_instance_id: '{{ _service_instance.id }}'
+
+    - name: Send error log message
+      netcloud.ncae.module_log:
+        level: error
+        hostname: localhost
+        title: Error
+        text: Something went wrong
+        service_id: '{{ _service.id }}'
+        service_instance_id: '{{ _service_instance.id }}'

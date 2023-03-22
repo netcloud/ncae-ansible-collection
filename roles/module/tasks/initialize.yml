@@ -1,0 +1,12 @@
+---
+- name: Log playbook execution to NCAE
+  ansible.builtin.include_tasks:
+    file: log.yml
+  vars:
+    log_title: '*** Playbook Execution Started **'
+    log_text: >-
+      Processing tasks for NCAE service instance
+      {{ ("#" ~ service_instance_id) if service_instance_id else "<unknown>" }}
+      for service
+      {{ ("#" ~ service_id) if service_id else "<unknown>" }}
+      with {{ devices | default([]) | length }} devices

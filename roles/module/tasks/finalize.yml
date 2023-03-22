@@ -1,0 +1,39 @@
+---
+- name: Handle succeeded execution
+  when: module_failed_result is not defined
+  block:
+    - name: Update phase status to Deployed
+      ansible.builtin.include_tasks:
+        file: phase_update.yml
+      vars:
+        phase_status: deployed
+
+    - name: Log playbook completion to NCAE
+      ansible.builtin.include_tasks:
+        file: log.yml
+      vars:
+        log_title: '*** Playbook Execution Completed **'
+        log_text: All tasks have been successfully executed.
+
+- name: Handle failed execution
+  when: module_failed_result is defined
+  block:
+    - name: Update phase status to Error
+      ansible.builtin.include_tasks:
+        file: phase_update.yml
+      vars:
+        phase_status: error
+
+    - name: Log playbook completion to NCAE
+      ansible.builtin.include_tasks:
+        file: log.yml
+      vars:
+        log_title: '*** Playbook Execution Failure ***'
+        log_text: >-
+          Unexpected playbook failure for task
+          [{{ module_failed_task.name | default(module_failed_task.action | default("<unknown>", true), true) }}]:
+          {{ module_failed_result.msg | default(module_failed_result) }}
+
+    - name: Re-raise previous failure
+      ansible.builtin.fail:
+        msg: 'Playbook execution failed: {{ module_failed_result }}'

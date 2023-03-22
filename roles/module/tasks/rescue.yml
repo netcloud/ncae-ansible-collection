@@ -1,0 +1,5 @@
+---
+- name: Store task failure
+  ansible.builtin.set_fact:
+    module_failed_task: '{{ ansible_failed_task }}'
+    module_failed_result: '{{ ansible_failed_result }}'

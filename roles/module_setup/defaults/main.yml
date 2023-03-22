@@ -1,0 +1,23 @@
+---
+module_setup_org_name: '{{ callback_data.organisation }}'
+module_setup_org_description: Used for NCAE<->Ansible Automation
+module_setup_org_galaxy_credentials: Ansible Galaxy
+
+module_setup_project_name: '{{ callback_data.git_name }}'
+module_setup_project_description: Used for NCAE<->Ansible Automation
+module_setup_project_credential_name: '{{ callback_data.git_credential_name }}'
+module_setup_project_git_url: '{{ GIT_URL }}'
+module_setup_project_git_branch: '{{ callback_data.git_branch }}'
+module_setup_project_git_username: '{{ GIT_USERNAME }}'
+module_setup_project_git_password: '{{ GIT_PASSWORD }}'
+module_setup_project_git_offline_mode: false
+
+module_setup_ext_service_name: '{{ callback_data.ext_api_service_name }}'
+module_setup_ext_service_description: Used for NCAE<->Ansible Automation
+module_setup_ext_service_base_url: '{{ TOWER_URL }}'
+module_setup_ext_service_auth_name: '{{ callback_data.ext_api_service_auth_name }}'
+module_setup_ext_service_auth_type: 'Basic'
+module_setup_ext_service_auth_username: '{{ TOWER_USERNAME }}'
+module_setup_ext_service_auth_value: '{{ TOWER_PASSWORD }}'
+
+module_setup_credential_ncae: 'NCAE'

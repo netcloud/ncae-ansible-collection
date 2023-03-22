@@ -1,0 +1,58 @@
+---
+- name: Log to NCAE
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module
+    tasks_from: log
+  vars:
+    log_title: 'NCAE Phase: {{ phase_service_name }} \ {{ phase_name }}'
+    log_text: 'Ensuring that AWX-based phase [{{ phase_service_name }} - {{ phase_name }}] has correct state'
+
+- name: Lookup NCAE credential
+  ansible.builtin.set_fact:
+    _awx_credential_ncae: >-
+      {{ query(
+        'awx.awx.controller_api',
+        'credentials',
+        query_params={
+          'name': module_setup_credential_ncae,
+          'organization': module_setup_awx_organization.id,
+        },
+      ) | first }}
+
+- name: Manage AWX job template for phase {{ phase_service_name ~ ' \ ' ~ phase_name }}
+  awx.awx.job_template:
+    state: present
+    name: '{{ phase_service_name }}-{{ phase_name }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+    project: '{{ module_setup_project_name }}'
+    playbook: '{{ phase_playbook }}'
+    inventory: '{{ phase_inventory }}'
+    credentials:
+      - '{{ _awx_credential_ncae.id }}'
+    ask_credential_on_launch: false
+    ask_inventory_on_launch: false
+    ask_limit_on_launch: true
+    ask_variables_on_launch: true
+    survey_enabled: false
+  register: _awx_job_template
+
+- name: Manage NCAE phase {{ phase_service_name ~ ' \ ' ~ phase_name }}
+  netcloud.ncae.core_automation_phase:
+    order: '{{ phase_order }}'
+    name: '{{ phase_label }}'
+    text: '{{ phase_text | default("Executes playbook " ~ phase_playbook ~ " via " ~ module_setup_ext_service.data.name, true) }}'
+    service_id: '{{ phase_service_id }}'
+    ext_api_service_id: '{{ module_setup_ext_service.id }}'
+    auto_deploy: true
+    idempotency: true
+    uri_reverse_capable: true
+    uri: job_templates/{{ _awx_job_template.id }}/launch/
+  register: _ncae_phase
+
+- name: Register outputs
+  ansible.builtin.set_fact:
+    '{{ register }}': >-
+      {{ _ncae_phase | combine({
+          "job_template": _awx_job_template,
+      }) }}
+  when: register is defined

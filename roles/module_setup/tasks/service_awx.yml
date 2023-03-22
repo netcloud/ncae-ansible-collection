@@ -1,0 +1,54 @@
+---
+- name: Log to NCAE
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module
+    tasks_from: log
+  vars:
+    log_title: 'NCAE Service: {{ service_name }}'
+    log_text: 'Ensuring that service [{{ service_name }}] and associated objects have correct state'
+
+- name: Manage NCAE service for {{ service_name }}
+  netcloud.ncae.core_automation_service:
+    name: '{{ service_name }}'
+    description: '{{ service_description | default }}'
+    template: '{{ service_template }}'
+    devices: '{{ service_devices | default(omit) }}'
+    module_name: '{{ service_module_name }}'
+  register: _ncae_service
+
+- name: Manage AWX-based phases for {{ service_name }}
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module_setup
+    tasks_from: phase_awx
+  vars:
+    phase_order: '{{ _phase_index + 1 }}'
+    phase_name: 'AWX-{{ _phase_index + 1 }}'
+    phase_label: '{{ _phase.label | default(service_name ~ "-" ~ (_phase_index + 1)) }}'
+    phase_text: '{{ _phase.text | default("") }}'
+    phase_playbook: '{{ _phase.playbook }}'
+    phase_inventory: '{{ _phase.inventory }}'
+    phase_service_id: '{{ _ncae_service.id }}'
+    phase_service_name: '{{ service_name }}'
+    register: _ncae_phase_{{ _phase_index }}
+  loop: '{{ service_phases }}'
+  loop_control:
+    loop_var: _phase
+    index_var: _phase_index
+
+- name: Collect individual phases
+  ansible.builtin.set_fact:
+    _ncae_phase: '{{ lookup("vars", "_ncae_phase_" ~ _phase_index) }}'
+  loop: '{{ service_phases }}'
+  loop_control:
+    loop_var: _phase
+    index_var: _phase_index
+  register: _ncae_phases
+
+- name: Register outputs
+  ansible.builtin.set_fact:
+    '{{ register }}': >-
+      {{ _ncae_service | combine({
+          "job_template": _awx_job_template,
+          "phases": _ncae_phases.results | map(attribute="ansible_facts._ncae_phase"),
+      }) }}
+  when: register is defined

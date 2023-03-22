@@ -1,0 +1,5 @@
+---
+- name: 'Update phase status to {{ phase_status }}'
+  netcloud.ncae.module_phase_update:
+    url: '{{ callback_url }}'
+    status: '{{ phase_status }}'

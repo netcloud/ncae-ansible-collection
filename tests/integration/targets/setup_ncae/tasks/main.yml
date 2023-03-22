@@ -1,0 +1,11 @@
+# Copyright (c) 2023 Netcloud AG
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Wait until NCAE backend is ready
+  ansible.builtin.uri:
+    url: '{{ ncae_base_url }}/api/auth/v1/check_session/'
+    status_code: [401]
+  register: result
+  until: result is succeeded
+  retries: 24
+  delay: 5

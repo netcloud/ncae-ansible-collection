@@ -8,10 +8,7 @@ __metaclass__ = type
 
 import json
 
-from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import (
-    NcaeClient,
-    NcaeSession,
-)
+from ansible_collections.netcloud.ncae.plugins.plugin_utils.ncae import NcaeClient, NcaeSession
 
 
 class MockNcaeClient:

@@ -1,0 +1,173 @@
+# Copyright (c) 2023 Netcloud AG
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test netcloud.ncae.core_automation_service
+  module_defaults:
+    group/netcloud.ncae.ncae:
+      ncae_base_url: '{{ ncae_base_url }}'
+      ncae_username: '{{ ncae_username }}'
+      ncae_password: '{{ ncae_password }}'
+  block:
+    - name: Create instance A
+      netcloud.ncae.core_automation_service: &ia-create
+        state: present
+        name: SERVICE-A
+        description: Service A
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+        module_name: ACI-Module
+      register: _ia_create
+
+    - name: Create instance B
+      netcloud.ncae.core_automation_service: &ib-create
+        state: present
+        name: SERVICE-B
+        description: Service B
+        module_name: ACI-Module
+        fire_and_forget: true
+        excel: true
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+      register: _ib_create
+
+    - name: Assert instance creation
+      ansible.builtin.assert:
+        that:
+          - _ia_create.id != _ib_create.id
+          # Instance A
+          # - _ia_create is changed
+          - _ia_create.id > 0
+          # - _ia_create.change_reason == "created"
+          - _ia_create.data.name == "SERVICE-A"
+          - _ia_create.data.description == "Service A"
+          - _ia_create.data.fire_and_forget == false
+          - _ia_create.data.excel == false
+          # Instance B
+          # - _ib_create is changed
+          - _ib_create.id > 0
+          # - _ib_create.change_reason == "created"
+          - _ib_create.data.name == "SERVICE-B"
+          - _ib_create.data.description == "Service B"
+          - _ib_create.data.fire_and_forget == true
+          - _ib_create.data.excel == true
+
+    - name: Create instance A with same values by name
+      netcloud.ncae.core_automation_service:
+        <<: *ia-create
+      register: _ia_create_again
+
+    - name: Create instance B with same values by ID
+      netcloud.ncae.core_automation_service:
+        <<: *ib-create
+      register: _ib_create_again
+
+    - name: Assert instance idempotency
+      ansible.builtin.assert:
+        that:
+          - _ia_create_again is succeeded
+          - _ia_create_again is not changed
+          - _ia_create_again.id == _ia_create.id
+          - _ib_create_again is succeeded
+          - _ib_create_again is not changed
+          - _ib_create_again.id == _ib_create.id
+
+    - name: Update instance A by name
+      netcloud.ncae.core_automation_service:
+        state: present
+        name: SERVICE-A
+        description: Service A NEW
+        fire_and_forget: true
+        excel: true
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+        module_name: ACI-Module
+      register: _ia_update
+
+    - name: Update instance B by id
+      netcloud.ncae.core_automation_service:
+        state: present
+        id: '{{ _ib_create.id }}'
+        name: SERVICE-B-NEW
+        description: Service B NEW
+        module_name: ACI-Module
+        fire_and_forget: false
+        excel: false
+        template:
+          values:
+            - name: name
+              label: Service Instance Name
+              type: text
+              required: true
+      register: _ib_update
+
+    - name: Assert instance update
+      ansible.builtin.assert:
+        that:
+          # Instance A
+          - _ia_update is changed
+          - _ia_update.change_reason == "updated"
+          - _ia_update.id == _ia_create.id
+          - _ia_update.data.name == "SERVICE-A"
+          - _ia_update.data.description == "Service A NEW"
+          - _ia_update.data.fire_and_forget == true
+          - _ia_update.data.excel == true
+          # Instance B
+          - _ib_update is changed
+          - _ib_update.change_reason == "updated"
+          - _ib_update.id == _ib_create.id
+          - _ib_update.data.name == "SERVICE-B-NEW"
+          - _ib_update.data.description == "Service B NEW"
+          - _ib_update.data.fire_and_forget == false
+          - _ib_update.data.excel == false
+
+    - name: Delete instance A by name
+      netcloud.ncae.core_automation_service:
+        state: absent
+        name: SERVICE-A
+      register: _ia_delete
+
+    - name: Delete instance B by ID
+      netcloud.ncae.core_automation_service:
+        state: absent
+        id: '{{ _ib_create.id }}'
+      register: _ib_delete
+
+    - name: Assert instance deletion
+      ansible.builtin.assert:
+        that:
+          - _ia_delete is changed
+          - _ia_delete.change_reason == "deleted"
+          - _ib_delete is changed
+          - _ib_delete.change_reason == "deleted"
+
+    - name: Delete instance A by name again
+      netcloud.ncae.core_automation_service:
+        state: absent
+        name: SERVICE-A
+      register: _ia_delete_again
+
+    - name: Delete instance B by ID again
+      netcloud.ncae.core_automation_service:
+        state: absent
+        id: '{{ _ib_create.id }}'
+      register: _ib_delete_again
+
+    - name: Assert instance deletion idempotency
+      ansible.builtin.assert:
+        that:
+          - _ia_delete_again is succeeded
+          - _ia_delete_again is not changed
+          - _ib_delete_again is succeeded
+          - _ib_delete_again is not changed

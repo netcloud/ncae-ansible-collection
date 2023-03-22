@@ -4,6 +4,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN true \
     && apt update -y \
     && apt install -y \
+        gettext-base \
         git \
         nodejs \
         npm \

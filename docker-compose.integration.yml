@@ -1,0 +1,36 @@
+version: '2.4'
+
+services:
+  ncae-core:
+    image: harbor-01.netcloud.lab/ncae/ncae-core:latest
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        python3 manage.py migrate
+        python3 manage.py createsuperuser --noinput
+        tools/run_prod.sh
+    stop_grace_period: 0s
+    environment:
+      DJANGO_ALLOWED_HOSTS: '*'
+      DJANGO_SECRET_KEY: ncae-integration-testing
+      DJANGO_DEBUG: 'true'
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_PASSWORD: integration
+      DJANGO_SUPERUSER_EMAIL: admin@localhost
+      BACKEND_HOST: ncae-core
+      BACKEND_PORT: 4265
+      DB_IP: postgres
+      DB_NAME: &pg-database ncae
+      DB_USER: &pg-username integration
+      DB_PW: &pg-password testing
+    ports:
+      - 4265:8000/tcp
+    depends_on:
+      - postgres
+
+  postgres:
+    image: docker.io/library/postgres:15
+    environment:
+      POSTGRES_DB: *pg-database
+      POSTGRES_USER: *pg-username
+      POSTGRES_PASSWORD: *pg-password

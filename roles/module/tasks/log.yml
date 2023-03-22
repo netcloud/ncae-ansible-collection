@@ -1,0 +1,10 @@
+---
+- name: 'Log to NCAE: {{ log_title[:100] }}'
+  netcloud.ncae.module_log:
+    url: '{{ logger_url | default(omit) }}'
+    level: '{{ log_level | default(omit) }}'
+    hostname: '{{ log_hostname | default(ansible_fqdn | default(callback_data.ext_api_service_name | default("Ansible"))) }}'
+    title: '{{ log_title[:100] }}'
+    text: '{{ log_text[:500] }}'
+    service_id: '{{ log_service_id | default(service_id) }}'
+    service_instance_id: '{{ log_service_instance_id | default(service_instance_id) }}'

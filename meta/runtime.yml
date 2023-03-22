@@ -1,2 +1,12 @@
 ---
 requires_ansible: '>=2.11.0'
+action_groups:
+  ncae:
+    - core_automation_auth
+    - core_automation_ext_api_service
+    - core_automation_phase
+    - core_automation_phase_instance
+    - core_automation_service
+    - core_automation_service_instance
+    - module_log
+    - module_phase_update

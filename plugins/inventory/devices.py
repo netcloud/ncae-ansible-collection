@@ -19,44 +19,44 @@ DOCUMENTATION = r"""
     options:
         ncae_base_url:
             description: Base URL of NCAE instance to query without trailing slash.
-            type: string
+            type: str
             required: true
             env:
                 - name: NCAE_BASE_URL
                 - name: NCAE_URL
         ncae_username:
             description: Username for authenticating against NCAE.
-            type: string
+            type: str
             required: true
             env:
                 - name: NCAE_USERNAME
         ncae_password:
             description: Password for authenticating against NCAE.
-            type: string
+            type: str
             required: true
             env:
                 - name: NCAE_PASSWORD
         validate_certs:
             description: Whether to verify SSL certificates for API connections.
             type: bool
-            default: true
+            default: false
             env:
                 - name: NCAE_VALIDATE_CERTS
         device_prefix:
             description: Prefix to be used in front of device ids.
-            type: string
+            type: str
             default: ncae_device_
             env:
                 - name: NCAE_INVENTORY_DEVICE_PREFIX
         group_prefix:
             description: Prefix to be used in front of group slugs.
-            type: string
+            type: str
             default: ncae_group_
             env:
                 - name: NCAE_INVENTORY_GROUP_PREFIX
         facts_prefix:
             description: Prefix to be used in front of device facts.
-            type: string
+            type: str
             default: ncae_
             env:
                 - name: NCAE_INVENTORY_FACTS_PREFIX
@@ -74,17 +74,18 @@ DOCUMENTATION = r"""
 
 EXAMPLES = """
 # Sample configuration for NCAE devices inventory
-    plugin: netcloud.ncae.devices
-    ncae_base_url: https://ncae.example.com
-    ncae_username: admin
-    ncae_password: secret
-    validate_certs: true
+plugin: netcloud.ncae.devices
+ncae_base_url: https://ncae.example.com
+ncae_username: admin
+ncae_password: secret
+validate_certs: true
 """
 
 from collections import defaultdict
+
 from ansible.module_utils.six import iteritems
 from ansible.plugins.inventory import BaseInventoryPlugin
-from ansible_collections.netcloud.ncae.plugins.module_utils.ncae import NcaeClient
+from ansible_collections.netcloud.ncae.plugins.plugin_utils.ncae import NcaeClient
 
 
 class InventoryModule(BaseInventoryPlugin):
@@ -145,9 +146,7 @@ class InventoryModule(BaseInventoryPlugin):
 
             # Add facts to device with configured prefix
             for fact_key, fact_value in iteritems(facts):
-                self.inventory.set_variable(
-                    device_name, self._facts_prefix + fact_key, fact_value
-                )
+                self.inventory.set_variable(device_name, self._facts_prefix + fact_key, fact_value)
 
             # Associate device with all its directly attached groups
             for group_id in device["groups"]:

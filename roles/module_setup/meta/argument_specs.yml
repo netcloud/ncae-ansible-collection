@@ -1,0 +1,205 @@
+---
+argument_specs:
+  main:
+    short_description: Setup base configuration in NCAE and AWX for module.
+    description:
+      - This role setups the base configuration for the current NCAE module.
+      - On AWX, this results in managing a dedicated organization, SCM credential and project.
+      - On NCAE, this results in managing the external service to AWX.
+      - There are no user-configurable options available.
+      - This role must only be used within the module deployment playbook, e.g. `deploy_tower_ncae.yml`
+    options: {}
+
+  external_service:
+    short_description: Manages an external API service including credentials within NCAE.
+    description:
+      - This role manages an external API service including credentials within NCAE.
+      - M(netcloud.ncae.core_automation_auth) is used to manage the credentials.
+      - M(netcloud.ncae.core_automation_ext_api_service) manages the external service and links to the credentials.
+    options:
+      external_service_name:
+        description:
+          - Name of the external API service, used as unique identifier.
+        type: str
+        required: true
+      external_service_description:
+        description:
+          - Optional human-friendly description for the external API service.
+        type: str
+      external_service_base_url:
+        description:
+          - Base URL for external API service, e.g. C(https://awx.example.com/api/v2/)
+        required: true
+      external_service_auth_name:
+        description:
+          - Name of the auth object used for storing the credentials, used as unique identifier.
+        type: str
+        required: true
+      external_service_auth_type:
+        description:
+          - Type of HTTP-based authentication used for external API service.
+        type: str
+        default: Basic
+        choices:
+          - Basic
+          - Bearer
+      external_service_auth_username:
+        description:
+          - Username used for external API service authentication.
+        type: str
+        required: true
+      external_service_auth_value:
+        description:
+          - Secret value used for external API service authentication.
+        type: str
+        required: true
+
+  inventory_dynamic:
+    short_description: Manages a dynamic inventory within AWX.
+    description:
+      - This role manages a dynamic inventory within AWX.
+      - An inventory object is automatically managed for storing the dynamic inventory data.
+      - An inventory source is then attached to it named C(Dynamic Inventory) to contain the actual logic.
+      - Every job launch automatically triggers an update of the dynamic inventory.
+      - Manual changes are not persisted and the inventory is always being overwritten.
+    options:
+      inventory_name:
+        description:
+          - Name of AWX inventory, used as unique identifier.
+        type: str
+        required: true
+      inventory_description:
+        description:
+          - Optional human-friendly description for the inventory.
+        type: str
+      inventory_file:
+        description:
+          - Path to inventory file relative to SCM project root.
+        type: str
+        required: true
+      inventory_credential:
+        description:
+          - ID or name of credential to be associated with inventory source.
+          - Uses NCAE credential by default when not specified.
+        type: str
+
+  phase_awx:
+    short_description: Manages NCAE service phase based on AWX playbook.
+    description:
+      - This role manages a single AWX-based phase for a NCAE service.
+      - An AWX job template is automatically managed using C(awx.awx.job_template).
+      - A NCAE phase is then managed and linked to this AWX job template via M(netcloud.ncae.core_automation_phase).
+    options:
+      phase_order:
+        description:
+          - Desired ordering for the managed phase, should be unique per service.
+          - The lower the phase order, the earlier it is called during a deployment.
+        type: int
+        required: true
+      phase_name:
+        description:
+          - Internal identifier used for this phase as a machine-readable string.
+          - This is used to build the AWX job template name which is C(<service-name>-<phase-name>).
+        type: str
+        required: true
+      phase_label:
+        description:
+          - Human-friendly label to use for this phase.
+          - Shown as title within the NCAE phase overview.
+          - If omitted, defaults to I(phase_name).
+        type: str
+      phase_text:
+        description:
+          - Human-friendly description what this phase does.
+          - Shown as body within the NCAE phase overview.
+          - If omitted, defaults to a string mentioning the playbook name.
+        type: str
+      phase_playbook:
+        description:
+          - Specifies which playbook should be executed as part of this phase.
+          - Path is relative to the SCM project root of the current module.
+        type: str
+        required: true
+      phase_inventory:
+        description:
+          - Specifies the ID or name of the inventory which should be used for the playbook.
+        type: str
+        required: true
+      phase_service_id:
+        description:
+          - Specifies the ID of the service to which this phase belongs.
+        type: int
+        required: true
+      phase_service_name:
+        description:
+          - Specifies the name of the service to which this phase belongs.
+          - Used for constructing AWX job template name and debugging.
+          - Must match the service that is passed with I(phase_service_id).
+        type: str
+        required: true
+
+  service_awx:
+    short_description: Manages NCAE service based on AWX playbook(s).
+    description:
+      - This role manages a NCAE service along with one or more phases pointing to AWX playbooks.
+      - It is only suitable for services where all phases are based on AWX playbooks.
+    options:
+      service_name:
+        description:
+          - Name of NCAE service, used as unique identifier.
+        type: str
+        required: true
+      service_description:
+        description:
+          - Optional human-friendly description for the service.
+        type: str
+      service_devices:
+        description:
+          - List of device IDs statically associated with this service.
+          - If specified, all instances are automatically tied to the given device(s).
+          - If left empty, the instance either has no devices at all or uses dynamic targeting.
+        type: list
+        elements: int
+        default: []
+      service_template:
+        description:
+          - Dictionary containing a service template from NCAE Core.
+          - While this can be manually built, it is recommended to use a template generated by NCAE Core.
+          - To do so, create in the NCAE service catalog, then use the template data for this parameter.
+          - This should always contain a top-level key C(values).
+        type: dict
+        required: true
+      service_module_name:
+        description:
+          - Name of module instance on NCAE Core.
+          - Acts as an unique identifier and must already exist.
+        type: str
+        required: true
+      service_phases:
+        description:
+          - List of AWX-based phase(s) to manage for this service.
+        type: list
+        elements: dict
+        options:
+          label:
+            description:
+              - Human-friendly label to use for this phase.
+              - Shown as title within the NCAE phase overview.
+              - 'If ommitted, defaults to the string C(<Service Name>-<Phase Index>)'
+            type: str
+          text:
+            description:
+              - Human-friendly description what this phase does.
+              - Shown as body within the NCAE phase overview.
+              - If omitted, defaults to a string mentioning the playbook name.
+            type: str
+          playbook:
+            description:
+              - Path to AWX playbook relative to SCM project root.
+            type: str
+            required: true
+          inventory:
+            description:
+              - ID or name of AWX inventory to be used for AWX job template.
+            type: str
+            required: true

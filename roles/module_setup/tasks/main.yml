@@ -1,0 +1,60 @@
+---
+- name: Log to NCAE
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module
+    tasks_from: log
+  vars:
+    log_title: 'AWX Organisation: {{ module_setup_org_name }}'
+    log_text: 'Ensuring that organisation [{{ module_setup_org_name }}] and associated objects have correct state'
+
+- name: Manage AWX organization
+  awx.awx.organization:
+    state: present
+    name: '{{ module_setup_org_name }}'
+    description: '{{ module_setup_org_description }}'
+    galaxy_credentials: '{{ module_setup_org_galaxy_credentials }}'
+  register: module_setup_awx_organization
+
+- name: Manage AWX credential for SCM project
+  awx.awx.credential:
+    state: present
+    name: '{{ module_setup_project_credential_name }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+    credential_type: Source Control
+    inputs:
+      username: '{{ module_setup_project_git_username }}'
+      password: '{{ module_setup_project_git_password }}'
+  register: module_setup_awx_project_scm_credential
+
+- name: Manage AWX project
+  awx.awx.project:
+    state: present
+    name: '{{ module_setup_project_name }}'
+    description: '{{ module_setup_project_description }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+    scm_type: git
+    scm_url: '{{ module_setup_project_git_url }}'
+    scm_branch: '{{ module_setup_project_git_branch }}'
+    scm_credential: '{{ module_setup_awx_project_scm_credential.id }}'
+    scm_update_on_launch: false
+  register: module_setup_awx_project
+
+- name: Update AWX project via SCM
+  awx.awx.project_update:
+    name: '{{ module_setup_project_name }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+    wait: false
+  when: not module_setup_project_git_offline_mode
+
+- name: Manage NCAE external service
+  ansible.builtin.include_tasks:
+    file: external_service.yml
+  vars:
+    external_service_name: '{{ module_setup_ext_service_name }}'
+    external_service_description: '{{ module_setup_ext_service_description }}'
+    external_service_base_url: '{{ module_setup_ext_service_base_url }}'
+    external_service_auth_name: '{{ module_setup_ext_service_auth_name }}'
+    external_service_auth_type: '{{ module_setup_ext_service_auth_type }}'
+    external_service_auth_username: '{{ module_setup_ext_service_auth_username }}'
+    external_service_auth_value: '{{ module_setup_ext_service_auth_value }}'
+    register: module_setup_ext_service

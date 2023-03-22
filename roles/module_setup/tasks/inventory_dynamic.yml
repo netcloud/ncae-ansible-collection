@@ -1,0 +1,52 @@
+---
+- name: Log to NCAE
+  ansible.builtin.include_role:
+    name: netcloud.ncae.module
+    tasks_from: log
+  vars:
+    log_title: 'AWX Dynamic Inventory: {{ inventory_name }}'
+    log_text: 'Ensuring that dynamic inventory [{{ inventory_name }}] and associated objects have correct state'
+
+- name: Lookup AWX inventory credential
+  ansible.builtin.set_fact:
+    _awx_inventory_credential: >-
+      {{ query(
+        'awx.awx.controller_api',
+        'credentials',
+        query_params={
+          'name': inventory_credential | default(module_setup_credential_ncae),
+          'organization': module_setup_awx_organization.id,
+        },
+      ) | first }}
+
+- name: Manage AWX inventory {{ inventory_name }}
+  awx.awx.inventory:
+    state: present
+    name: '{{ inventory_name }}'
+    description: '{{ inventory_description | default(omit) }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+  register: _awx_inventory
+
+- name: Manage AWX inventory source for {{ inventory_name }}
+  awx.awx.inventory_source:
+    state: present
+    name: Dynamic Inventory
+    inventory: '{{ _awx_inventory.id }}'
+    organization: '{{ module_setup_awx_organization.id }}'
+    credential: '{{ _awx_inventory_credential.id }}'
+    source: scm
+    source_project: '{{ module_setup_awx_project.id }}'
+    source_path: '{{ inventory_file }}'
+    update_on_launch: true
+    overwrite: true
+    overwrite_vars: true
+  register: _awx_inventory_source
+
+- name: Register outputs
+  ansible.builtin.set_fact:
+    '{{ register }}': >-
+      {{ _awx_inventory | combine({
+          "credential": _awx_inventory_credential,
+          "source": _awx_inventory_source,
+      }) }}
+  when: register is defined
