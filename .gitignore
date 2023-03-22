@@ -1,9 +1,14 @@
 # Ansible
-/dest
+/ansible_collections
+/docs/output
 /tests/integration/integration_config.yml
 /tests/integration/inventory
 /tests/output
 /*.tar.gz
+
+# GitLab
+.cache/
+*.report.*
 
 # Python
 __pycache__/
