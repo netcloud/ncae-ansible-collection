@@ -148,6 +148,9 @@ ansible-test-integration:
         POSTGRES_USER: integration
         POSTGRES_PASSWORD: testing
 
+    - name: docker.io/library/redis:7
+      alias: redis
+
     - name: harbor-01.netcloud.lab/ncae/ncae-core:R1.2-13
       alias: ncae-core
       entrypoint: ["/bin/bash", "-c"]
@@ -165,6 +168,7 @@ ansible-test-integration:
         DJANGO_SUPERUSER_EMAIL: admin@localhost
         BACKEND_HOST: ncae-core
         BACKEND_PORT: 8000
+        WEBSOCKET_REDIS: redis:6379
         DB_IP: postgres
         DB_NAME: ncae
         DB_USER: integration
