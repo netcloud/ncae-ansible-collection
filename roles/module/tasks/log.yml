@@ -8,3 +8,9 @@
     text: '{{ log_text[:500] }}'
     service_id: '{{ log_service_id | default(service_id) }}'
     service_instance_id: '{{ log_service_instance_id | default(service_instance_id) }}'
+  when: not ncae_module_simulation
+
+- name: '[SIMULATION] Log to NCAE: {{ log_title[:100] }}'
+  ansible.builtin.debug:
+    msg: '{{ log_text[:500] }}'
+  when: ncae_module_simulation

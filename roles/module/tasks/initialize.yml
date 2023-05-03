@@ -1,12 +1,32 @@
 ---
+- name: Detect if module execution is simulated
+  ansible.builtin.set_fact:
+    ncae_module_simulation: >-
+      {{
+        (tower_job_id is not defined) and
+        (service_id is not defined) and
+        (service_instance_id is not defined)
+      }}
+  when: ncae_module_simulation is not defined
+
+- name: Prepare environment for simulation
+  when: ncae_module_simulation
+  block:
+    - name: Set well-known variables from NCAE Core
+      ansible.builtin.set_fact:
+        callback_url: null
+        logger_url: null
+        service_id: 0
+        service_instance_id: 0
+
 - name: Log playbook execution to NCAE
   ansible.builtin.include_tasks:
     file: log.yml
   vars:
     log_title: '*** Playbook Execution Started **'
     log_text: >-
-      Processing tasks for NCAE service instance
+      Started processing tasks for NCAE service instance
       {{ ("#" ~ service_instance_id) if service_instance_id else "<unknown>" }}
       for service
       {{ ("#" ~ service_id) if service_id else "<unknown>" }}
-      with {{ devices | default([]) | length }} devices
+      with {{ devices | default([]) | length }} devices.

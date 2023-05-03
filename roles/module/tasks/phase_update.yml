@@ -1,5 +1,11 @@
 ---
-- name: 'Update phase status to {{ phase_status }}'
+- name: Update phase status to {{ phase_status }}
   netcloud.ncae.module_phase_update:
     url: '{{ callback_url }}'
     status: '{{ phase_status }}'
+  when: not ncae_module_simulation
+
+- name: '[SIMULATION] Update phase status to {{ phase_status }}'
+  ansible.builtin.debug:
+    msg: 'Updated phase status to [{{ phase_status }}].'
+  when: ncae_module_simulation
