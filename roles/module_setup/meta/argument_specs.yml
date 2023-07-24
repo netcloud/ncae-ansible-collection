@@ -137,6 +137,12 @@ argument_specs:
           - Must match the service that is passed with I(phase_service_id).
         type: str
         required: true
+      phase_send_credentials:
+        description:
+          - Specifies if device credentials should be part of this phase payload.
+          - Can be used by the external service for device authentication.
+        type: bool
+        default: false
 
   service_awx:
     short_description: Manages NCAE service based on AWX playbook(s).
@@ -203,3 +209,9 @@ argument_specs:
               - ID or name of AWX inventory to be used for AWX job template.
             type: str
             required: true
+          send_credentials:
+            description:
+              - Specifies if device credentials should be part of this phase payload.
+              - Can be used by the external service for device authentication.
+            type: bool
+            default: false

@@ -27,6 +27,7 @@
     phase_text: '{{ _phase.text | default("") }}'
     phase_playbook: '{{ _phase.playbook }}'
     phase_inventory: '{{ _phase.inventory }}'
+    phase_send_credentials: '{{ _phase.send_credentials | default(false) }}'
     phase_service_id: '{{ _ncae_service.id }}'
     phase_service_name: '{{ service_name }}'
     register: _ncae_phase_{{ _phase_index }}

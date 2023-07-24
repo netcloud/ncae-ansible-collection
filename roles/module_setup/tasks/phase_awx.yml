@@ -46,6 +46,7 @@
     auto_deploy: true
     idempotency: true
     uri_reverse_capable: true
+    send_credentials: '{{ phase_send_credentials | default(false) }}'
     uri: job_templates/{{ _awx_job_template.id }}/launch/
   register: _ncae_phase
 

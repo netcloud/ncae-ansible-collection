@@ -57,6 +57,11 @@ DOCUMENTATION = r"""
                 - Specifies if the phase should be seen as idempotent.
             type: bool
             default: false
+        send_credentials:
+            description:
+                - Specifies if device credentials should be sent as part of the payload.
+            type: bool
+            default: false
         uri_reverse_capable:
             description:
                 - Specifies if the same URI can be used for teardown as well.
@@ -90,6 +95,7 @@ EXAMPLES = r"""
     ext_api_service_id: 9
     auto_deploy: true
     idempotency: true
+    send_credentials: true
     uri_reverse_capable: true
     uri: job_templates/17/launch/
 """

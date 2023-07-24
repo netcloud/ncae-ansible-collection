@@ -58,6 +58,10 @@ class ActionModule(NcaeRestActionBase):
                     "type": "bool",
                     "default": False,
                 },
+                "send_credentials": {
+                    "type": "bool",
+                    "default": False,
+                },
                 "uri": {
                     "type": "str",
                 },
