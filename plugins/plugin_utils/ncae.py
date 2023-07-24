@@ -85,6 +85,15 @@ class NcaeClient:
         # This is require to cover API failures/mismatches with NCAE core
         for k, av in iteritems(attributes):
             iv = existing.get(k, existing.get(k + "_id"))
+
+            # Transform numerical strings to actual numbers
+            # This is required as sometimes strings are returned by the API
+            if isinstance(av, str) and av.isdigit():
+                av = int(av)
+            if isinstance(iv, str) and iv.isdigit():
+                iv = int(iv)
+
+            # Ensure that item value matches attribute value, otherwise fail
             if iv != av:
                 raise Exception(
                     f"found item with mismatched value [{iv}], expected [{av}] for key [{k}], "
