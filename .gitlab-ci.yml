@@ -3,7 +3,7 @@ default:
   tags: [ncae-docker]
 
 variables:
-  GIT_CLONE_PATH: ${CI_BUILDS_DIR}/ansible_collections/netcloud/ncae
+  GIT_CLONE_PATH: ${CI_BUILDS_DIR}/${CI_RUNNER_SHORT_TOKEN}/${CI_CONCURRENT_ID}/${CI_PROJECT_PATH}/ansible_collections/netcloud/ncae
   PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.cache/pip
   CI_DEBUG_SERVICES: "true"
 
@@ -48,7 +48,7 @@ docs-build:
   needs:
     - devct-build
   variables:
-    ANSIBLE_COLLECTIONS_PATHS: "${CI_BUILDS_DIR}/ansible_collections/"
+    ANSIBLE_COLLECTIONS_PATHS: "${GIT_CLONE_PATH}/../../"
   script:
     - mkdir -p docs/output
     - antsibull-docs sphinx-init --use-current --dest-dir docs/output netcloud.ncae
