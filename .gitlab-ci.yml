@@ -151,7 +151,7 @@ ansible-test-integration:
     - name: docker.io/library/redis:7
       alias: redis
 
-    - name: harbor-01.netcloud.lab/ncae/ncae-core:R1.2-13
+    - name: harbor-01.netcloud.lab/ncae/ncae-core:R1.2-15
       alias: ncae-core
       entrypoint: ["/bin/bash", "-c"]
       command:
