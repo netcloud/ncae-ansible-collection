@@ -7,6 +7,14 @@
         file: phase_update.yml
       vars:
         phase_status: deployed
+      when: not decommission
+
+    - name: Update phase status to Retired
+      ansible.builtin.include_tasks:
+        file: phase_update.yml
+      vars:
+        phase_status: retired
+      when: decommission
 
     - name: Log playbook completion to NCAE
       ansible.builtin.include_tasks:
