@@ -30,3 +30,17 @@
       for service
       {{ ("#" ~ service_id) if service_id else "<unknown>" }}
       with {{ devices | default([]) | length }} devices.
+
+- name: Transform payload credentials into Ansible credentials
+  ansible.builtin.set_fact:
+    ansible_user: >-
+      {{
+        (devices | selectattr('id', 'eq', ncae_device_id) | first | default({}))
+        .credential.username | default(ansible_user | default(omit))
+      }}
+    ansible_password: &password >-
+      {{
+        (devices | selectattr('id', 'eq', ncae_device_id) | first | default({}))
+        .credential.password | default(ansible_password | default(omit))
+      }}
+    ansible_become_password: *password
