@@ -25,6 +25,7 @@ class ActionModule(NcaeRestActionBase):
         # This is needed by `ansible.module_utils.urls.prepare_multipart`
         values["file"] = {
             "filename": values.pop("path", None) or values["name"],
+            "content": values.pop("content", None),
             "mime_type": values.pop("mime_type", None),
         }
 
@@ -36,7 +37,10 @@ class ActionModule(NcaeRestActionBase):
                 **NCAE_REST_ARGUMENT_SPEC,
                 "name": {
                     "type": "str",
-                    "required": True,
+                },
+                "content": {
+                    "type": "str",
+                    "default": None,
                 },
                 "path": {
                     "type": "str",
@@ -56,5 +60,12 @@ class ActionModule(NcaeRestActionBase):
                     "type": "bool",
                     "default": False,
                 },
-            }
+            },
+            "mutually_exclusive": [
+                ("content", "path"),
+            ],
+            "required_if": [
+                ("state", "present", ("name",)),
+                ("state", "absent", ("id",)),
+            ],
         }

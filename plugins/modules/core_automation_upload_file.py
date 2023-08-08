@@ -20,10 +20,17 @@ DOCUMENTATION = r"""
                 - Name to be used for storing the file inside NCAE.
             type: str
             required: true
+        content:
+            description:
+                - Optional content which should be used instead of reading from the filesystem.
+                - In case of binary data, avoid this option and use I(path) instead.
+                - Options I(content) and I(path) are mutually exclusive.
+            type: str
         path:
             description:
                 - Optional path to the file which should be uploaded.
-                - If not specified, defaults to the same value as C(name).
+                - If not specified, defaults to the same value as I(name).
+                - Options I(content) and I(path) are mutually exclusive.
             type: str
         mime_type:
             description:
@@ -53,13 +60,18 @@ DOCUMENTATION = r"""
 """
 
 EXAMPLES = r"""
-# Create or update NCAE service
+# Upload new file called netcloud.jpg based on local/company-logo.jpg
 - netcloud.ncae.core_automation_upload_file:
     name: netcloud.jpg
     path: local/company-logo.jpg
     mime_type: image/jpeg
     delete_on: 2038-01-19
     service_instance: 139
+
+# Upload new file based on string
+- netcloud.ncae.core_automation_upload_file:
+    name: important.txt
+    content: Hello World
 """
 
 RETURN = r"""
