@@ -8,5 +8,6 @@ action_groups:
     - core_automation_phase_instance
     - core_automation_service
     - core_automation_service_instance
+    - core_automation_upload_file
     - module_log
     - module_phase_update

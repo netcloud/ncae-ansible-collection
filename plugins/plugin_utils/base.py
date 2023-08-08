@@ -190,6 +190,9 @@ class NcaeRestActionBase(NcaeActionBase):
     def get_endpoint(self):
         pass
 
+    def get_request_options(self):
+        return {}
+
     def get_ignored_keys(self):
         return set()
 
@@ -243,6 +246,7 @@ class NcaeRestActionBase(NcaeActionBase):
                 endpoint=self.get_endpoint(),
                 id=self._task_args["id"],
                 values=values,
+                **self.get_request_options(),
             )
 
         # Determine unique keys for upsert operation
@@ -252,6 +256,7 @@ class NcaeRestActionBase(NcaeActionBase):
             return self.ncae_client.create(
                 endpoint=self.get_endpoint(),
                 values=values,
+                **self.get_request_options(),
             )
 
         # Execute upsert operation to create/update as needed
@@ -261,6 +266,7 @@ class NcaeRestActionBase(NcaeActionBase):
             attributes=attributes,
             values=values,
             ignores=self.get_ignored_keys(),
+            request_opts=self.get_request_options(),
         )
 
     def _manage_absent(self):
@@ -277,6 +283,7 @@ class NcaeRestActionBase(NcaeActionBase):
         existing = self.ncae_client.lookup(
             endpoint=self.get_endpoint(),
             attributes=attributes,
+            request_opts=self.get_request_options(),
         )
 
         # If no item has been found, consider as successful
@@ -287,4 +294,5 @@ class NcaeRestActionBase(NcaeActionBase):
         return self.ncae_client.delete(
             endpoint=self.get_endpoint(),
             id=existing["id"],
+            **self.get_request_options(),
         )

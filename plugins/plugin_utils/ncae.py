@@ -13,7 +13,7 @@ import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.six.moves.urllib.parse import urljoin, urlsplit
-from ansible.module_utils.urls import Request
+from ansible.module_utils.urls import Request, prepare_multipart
 
 
 class NcaeClient:
@@ -33,8 +33,8 @@ class NcaeClient:
             },
         )
 
-    def create(self, endpoint, values):
-        response = self._session.post(endpoint, data=values)
+    def create(self, endpoint, values, **kwargs):
+        response = self._session.post(endpoint, data=values, **kwargs)
 
         return {
             "changed": True,
@@ -44,9 +44,9 @@ class NcaeClient:
             "data": response,
         }
 
-    def update(self, endpoint, id, values):
+    def update(self, endpoint, id, values, **kwargs):
         instance_url = f"{endpoint}/{id}"
-        response = self._session.patch(instance_url, data=values)
+        response = self._session.patch(instance_url, data=values, **kwargs)
 
         return {
             "changed": True,
@@ -56,9 +56,9 @@ class NcaeClient:
             "data": response,
         }
 
-    def delete(self, endpoint, id):
+    def delete(self, endpoint, id, **kwargs):
         instance_url = f"{endpoint}/{id}"
-        response = self._session.delete(instance_url)
+        response = self._session.delete(instance_url, **kwargs)
 
         if response is None:
             return {"changed": False}
@@ -70,9 +70,16 @@ class NcaeClient:
             "id": id,
         }
 
-    def lookup(self, endpoint, attributes):
+    def lookup(self, endpoint, attributes, request_opts=None):
         # Retrieve existing items with specified attributes
-        items = self._session.get(endpoint, params=attributes)["results"]
+        request_opts = request_opts if request_opts is not None else {}
+        items = self._session.get(
+            endpoint,
+            params=attributes,
+            request_opts=request_opts,
+        )["results"]
+
+        # Ensure there is at most one item to determine uniqueness
         if len(items) > 1:
             raise Exception(f"more than one item for {endpoint} with: {attributes}")
         existing = items[0] if len(items) == 1 else None
@@ -102,7 +109,7 @@ class NcaeClient:
 
         return existing
 
-    def upsert(self, endpoint, attributes, values, ignores=None):
+    def upsert(self, endpoint, attributes, values, *, ignores=None, request_opts=None):
         # Build list of ignored keys
         ignores = [] if ignores is None else ignores
 
@@ -114,6 +121,7 @@ class NcaeClient:
             return self.create(
                 endpoint=endpoint,
                 values=values,
+                **request_opts,
             )
 
         # Otherwise compare existing item with provided values
@@ -149,6 +157,7 @@ class NcaeClient:
             endpoint=endpoint,
             id=existing["id"],
             values=values,
+            **request_opts,
         )
         result["diff"] = diff
 
@@ -192,7 +201,7 @@ class NcaeSession:
             validate_certs=validate_certs,
         )
 
-    def get(self, url, params=None):
+    def get(self, url, params=None, **kwargs):
         if params is not None:
             params = {key: value for key, value in params.items() if value is not None}
             url = f"{url}?{urlencode(params)}"
@@ -200,45 +209,65 @@ class NcaeSession:
         return self._request(
             method="GET",
             url=url,
+            **kwargs,
         )
 
-    def post(self, url, data):
+    def post(self, url, data, **kwargs):
         return self._request(
             method="POST",
             url=url,
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
+            data=data,
+            **kwargs,
         )
 
-    def put(self, url, data):
+    def put(self, url, data, **kwargs):
         return self._request(
             method="PUT",
             url=url,
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
+            data=data,
+            **kwargs,
         )
 
-    def patch(self, url, data):
+    def patch(self, url, data, **kwargs):
         return self._request(
             method="PATCH",
             url=url,
-            data=json.dumps(data),
-            headers={"Content-Type": "application/json"},
+            data=data,
+            **kwargs,
         )
 
-    def delete(self, url):
+    def delete(self, url, **kwargs):
         return self._request(
             method="DELETE",
             url=url,
+            **kwargs,
         )
 
-    def _request(self, method, url, **kwargs):
+    def _request(self, *, method, url, data=None, **kwargs):
         # Sanitize request method
         method = str(method).upper()
 
+        # Read well-known custom options
+        headers = dict(kwargs.get("headers", {}))
+        multipart = bool(kwargs.get("multipart", False))
+
+        # Prepare body based on specified data
+        if data and multipart:
+            form_data = self._convert_to_form_data(data)
+            header, data = prepare_multipart(form_data)
+            headers["Content-Type"] = header
+        elif data:
+            headers.setdefault("Content-Type", "application/json")
+            data = json.dumps(data)
+
         # Execute actual HTTP request and wrap any errors
         try:
-            response = self._http_client.open(method=method, url=urljoin(self._base_url, url), **kwargs)
+            response = self._http_client.open(
+                method=method,
+                url=urljoin(self._base_url, url),
+                headers=headers,
+                data=data,
+            )
         except HTTPError as e:
             # Return None for DELETE requests which result in 404
             # This is required to maintain idempotency
@@ -261,3 +290,28 @@ class NcaeSession:
 
         # Otherwise parse body as JSON payload
         return json.loads(response.read())
+
+    @classmethod
+    def _convert_to_form_data(cls, value):
+        if not isinstance(value, dict):
+            raise Exception("Unable to convert type [%s] into form-data, expected dict" % (value,))
+
+        form_data = {}
+        for key, value in iteritems(value):
+            if isinstance(value, str):
+                form_data[key] = value
+            elif isinstance(value, bool):
+                form_data[key] = "true" if value else "false"
+            elif isinstance(value, int) or isinstance(value, float):
+                form_data[key] = str(value)
+            elif isinstance(value, dict):
+                # Pass dictionaries as-is, with the assumption that those contain file properties
+                # If they do not, error handling is already provided as part of prepare_multipart
+                form_data[key] = value
+            elif value is None:
+                # Exclude the key from the formdata if not set
+                pass
+            else:
+                raise Exception("Unable to convert key [%s] with type [%s] into form-data" % (key, type(value)))
+
+        return form_data
